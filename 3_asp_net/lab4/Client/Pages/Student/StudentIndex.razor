@@ -1,0 +1,59 @@
+﻿@page "/Group/{idgroup}"
+@attribute [Authorize]
+
+@using Lab4.Shared.Domain
+@using Lab4.Client.Services
+@using Microsoft.AspNetCore.Authorization
+
+@inject StudentService StudentService
+@inject GroupService GroupService
+
+@if (Student != null)
+{
+    <h1 class="display-4">Студенты - @GroupName</h1>
+    <table class="table table-hover">
+    <thead>
+        <tr>
+            <th>Номер зачётки</th>
+            <th>ФИО</th>
+            <th>Признак старосты</th>
+            <th>Действие</th>
+        </tr>
+    </thead>
+    <tbody>
+            @foreach (var stud in Student)
+            {
+                <tr>
+                    <th scope="row">@stud.idstudent</th>
+                    <td class="w-100">@stud.FIO</td>
+                    <td>@stud.headman_sign</td>
+                    <td nowrap>
+                        <input class="btn btn-danger" type="submit" value="X" @onclick="() => Delete(stud)">
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <a class="btn btn-success" href="/Group/@idgroup/Create">Добавить студента</a>
+    <a class="btn btn-danger" href="/Group">Назад</a>
+}
+
+@code {
+    [Parameter]
+    public string idgroup { get; set; }
+    private string GroupName { get; set; }
+    IEnumerable<StudentModel> Student;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Student = await StudentService.GetStudent(idgroup);
+        GroupName = await GroupService.GetNameOfGroup(idgroup);
+    }
+
+    private async Task Delete(StudentModel del_stud)
+    {
+        await StudentService.DeleteStudent(del_stud);
+        Student = await StudentService.GetStudent(idgroup);
+        StateHasChanged();
+    }
+}

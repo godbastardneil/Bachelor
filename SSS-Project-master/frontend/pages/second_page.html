@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <!-- Bootstrap CSS -->
+    <link href="/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="/css/style.css" rel="stylesheet">
+    <!-- JQuery, Popper, Bootstrap для функционала Boostrap -->
+    <script src="/js/jquery-3.5.1.min.js"></script>
+    <script src="/js/popper.min.js"></script>
+    <script src="/js/bootstrap.min.js"></script>
+
+    <!-- Timeline -->
+    <script src="/js/Timeline/Timeline.js"></script>
+    <script src="/js/Timeline/vis-timeline-graph2d.min.js"></script>
+    <link href="/js/Timeline/vis-timeline-graph2d.min.css" rel="stylesheet" type="text/css" />
+    <!-- Socket -->
+    <script src="/socket.io/socket.io.js"></script>
+    <!-- Custom JS -->
+    <script src="/js/script.js"></script>
+
+
+    <title>Создание наряда - начальное состояние</title>
+</head>
+
+<body>
+    <div class="header mt-3 fnt">
+        <p> LOGISTICS MANAGEMENT SYSTEM </p>
+        <div id="current_date_time_block"></div>
+    </div>
+    <!-- Заголовок с информацией о заявке -->
+    <div id="info-header" class="container mt-3 app-back-panel">
+        <dl class="row mt-3">
+            <dt class="col-2">Заявка:</dt>
+            <dd id="request-id" class="col-2"> <span class="status-small ignored-col"></span></dd>
+            <dt class="col-3">Время и дата выполнения:</dt>
+            <dd id="request-date" class="col-auto"> </dd>
+        </dl>
+        <dl class="row">
+            <dt class="col-2">Цех:</dt>
+            <dd id="request-department" class="col-2"><!--СПБО--></dd>
+            <dt class="col-3">Место работы:</dt>
+            <dd id="request-place" class="col-auto"><!--ПСП--></dd>
+        </dl>
+        <hr>
+        <dl class="row">
+            <dt class="col-2">Ответственный:</dt>
+            <dd id="request-person" class="col-auto"><!--Челомцев Т.В.--></dd>
+        </dl>
+        <dl class="row mb-2">
+            <dt class="col-2">Описание работ:</dt>
+            <dd id="request-desc" class="col-auto"><!--ТП: Промывка скважины--></dd>
+        </dl>
+    </div>
+    <p class="text-center font-weight-bold mt-3">Необходимая техника для реализации наряда:</p>
+    <!-- Контейнер с виртуальной техникой и таймлайном -->
+    <div class="container app-back-panel">
+        <dl class="row mt-3 mb-0">
+            <!-- Список с виртуальной техникой -->
+            <div id="virt-list-of-vehicles" class="col">
+                <dl class="row">
+                    <div class="col-3 font-weight-bold">Техника</div>
+                    <div class="col-2 font-weight-bold">Локация</div>
+                    <div class="col-7 font-weight-bold">Операция-время</div>
+                </dl>
+                <!--<dl class="row mt-5">
+                    <a class="virt-vehicle col-3 m-auto" data-toggle="collapse" role="button"
+                       href="#vehicle1"><span></span><span>ВТ1: Промывки</span></a>
+                    <dd class="col-2 m-auto">ПСП - СПБО</dd>
+                    <dd class="col-7 m-auto" id="timeline1"></dd>
+                </dl>
+                <dl class="row mt-5 disabled">
+                    <div class="col-3 font-weight-bold">Исполнитель</div>
+                    <dd class="col-2">
+                        <select class="custom-select mr-sm-2 text-center" id="inlineFormCustomSelects1">
+                            <option value="1">М3-1</option>
+                            <option value="2">М3-2</option>
+                            <option value="3">М3-3</option>
+                            <option value="4">М3-4</option>
+                        </select>
+                    </dd>
+                </dl>
+                <dl class="row mt-5">
+                    <a class="virt-vehicle col-3 m-auto" data-toggle="collapse" role="button"
+                       href="#vehicle2"><span></span><span>ВТ2: Обесп. водой</span></a>
+                    <dd class="col-2 m-auto">ПСП - СПБО</dd>
+                    <dd class="col-7 m-auto" id="timeline2"></dd>
+                </dl>
+                <p>Обеспечено: <b>0</b> из <b>30 м<sup>3</sup></b></p>-->
+
+            </div>
+            <!-- Таймлайны -->
+
+        </dl>
+
+
+    </div>
+    <!-- Контейнер с настоящей техникой и таймлайном -->
+    <div id="collapse-list-of-vehicles"></div>
+    <div id="info-headers" class="container mt-3 " style="margin-bottom: 1%; display:flex; justify-content: space-between">
+        <button type="button" class="btn btn-danger fnt" id="to_mp"> Вернуться в журнал без сохранения </button>
+        <button type="button" class="btn btn-success fnt" id="add_save"> Назначить и вернуться в журнал </button>
+    </div>
+
+</body>
+</html>

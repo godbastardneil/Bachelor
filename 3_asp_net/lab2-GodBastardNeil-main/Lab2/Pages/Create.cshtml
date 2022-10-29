@@ -1,0 +1,29 @@
+﻿@page
+@model CreateModel
+@{
+    ViewData["Title"] = "Create data";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Студент</h1>
+
+    <div class="form_data_inc_block">
+        <p class="form_data_inc_block_head_text">Введите данные</p>
+        <form class="form_data_inc_style" method="post">
+
+            <snap><input type="number" name="data.Id" placeholder="Введите номер зачётки" required></snap>
+
+            <snap><input name="data.FIO" placeholder="Введите ФИО" required></snap>
+
+            <snap>
+                <label for="data_inc_check">Староста? </label>
+                <input type="checkbox" name="data.isStar" placeholder="Укажите староста ли студент" value="true">
+            </snap>
+
+            <snap><button class="form_inc_data" type="submit" name="form_inc_submit">Ок</button></snap>
+
+            <snap><a class="nav-link text-dark" asp-area="" asp-page="/Index">Отмена</a></snap>
+
+        </form>
+    </div>
+</div>

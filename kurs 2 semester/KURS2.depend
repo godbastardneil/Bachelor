@@ -1,0 +1,81 @@
+# depslib dependency file v1.0
+1561641534 source:c:\users\user\desktop\kurs-2-semester-master\kurs 2 semester\admin.cpp
+	<fstream>
+	<iostream>
+	<vector>
+	<windows.h>
+	<conio.h>
+	"print.h"
+	"stat.h"
+	"admin.h"
+
+1561641534 c:\users\user\desktop\kurs-2-semester-master\kurs 2 semester\print.h
+
+1561641534 c:\users\user\desktop\kurs-2-semester-master\kurs 2 semester\stat.h
+
+1561641534 c:\users\user\desktop\kurs-2-semester-master\kurs 2 semester\admin.h
+
+1561991900 source:c:\users\user\desktop\kurs-2-semester-master\kurs 2 semester\list.cpp
+	<iostream>
+	<vector>
+	<windows.h>
+	<iomanip>
+	"print.h"
+	"struct.h"
+
+1561641534 c:\users\user\desktop\kurs-2-semester-master\kurs 2 semester\struct.h
+
+1561991836 source:c:\users\user\desktop\kurs-2-semester-master\kurs 2 semester\main.cpp
+	<iostream>
+	<vector>
+	<windows.h>
+	<conio.h>
+	"print.h"
+	"struct.h"
+	"theory.h"
+	"stat.h"
+	"test.h"
+	"list.h"
+	"admin.h"
+
+1561641534 c:\users\user\desktop\kurs-2-semester-master\kurs 2 semester\theory.h
+
+1561641534 c:\users\user\desktop\kurs-2-semester-master\kurs 2 semester\test.h
+
+1561641534 c:\users\user\desktop\kurs-2-semester-master\kurs 2 semester\list.h
+
+1561991899 source:c:\users\user\desktop\kurs-2-semester-master\kurs 2 semester\stat.cpp
+	<fstream>
+	<iostream>
+	<vector>
+	<ctime>
+	<string>
+	"print.h"
+	"stat.h"
+
+1561991435 source:c:\users\user\desktop\kurs-2-semester-master\kurs 2 semester\print.cpp
+	<iostream>
+	<vector>
+	<windows.h>
+	<iomanip>
+	<conio.h>
+	"print.h"
+
+1561991899 source:c:\users\user\desktop\kurs-2-semester-master\kurs 2 semester\test.cpp
+	<iostream>
+	<vector>
+	<algorithm>
+	<fstream>
+	<conio.h>
+	"struct.h"
+	"stat.h"
+	"print.h"
+	"test.h"
+
+1561991900 source:c:\users\user\desktop\kurs-2-semester-master\kurs 2 semester\theory.cpp
+	<fstream>
+	<iostream>
+	<vector>
+	"print.h"
+	"theory.h"
+

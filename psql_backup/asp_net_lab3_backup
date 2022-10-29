@@ -1,0 +1,204 @@
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 13.3 (Debian 13.3-1.pgdg100+1)
+-- Dumped by pg_dump version 13.3 (Debian 13.3-1.pgdg100+1)
+
+-- Started on 2021-07-01 23:50:58 +04
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- TOC entry 2961 (class 1262 OID 16454)
+-- Name: asp_net_lab3; Type: DATABASE; Schema: -; Owner: postgres
+--
+
+CREATE DATABASE asp_net_lab3 WITH TEMPLATE = template0 ENCODING = 'UTF8' LOCALE = 'ru_RU.UTF-8';
+
+
+ALTER DATABASE asp_net_lab3 OWNER TO postgres;
+
+\connect asp_net_lab3
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- TOC entry 200 (class 1259 OID 16455)
+-- Name: __EFMigrationsHistory; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."__EFMigrationsHistory" (
+    "MigrationId" character varying(150) NOT NULL,
+    "ProductVersion" character varying(32) NOT NULL
+);
+
+
+ALTER TABLE public."__EFMigrationsHistory" OWNER TO postgres;
+
+--
+-- TOC entry 201 (class 1259 OID 16458)
+-- Name: group; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."group" (
+    idgroup integer NOT NULL,
+    name text NOT NULL
+);
+
+
+ALTER TABLE public."group" OWNER TO postgres;
+
+--
+-- TOC entry 202 (class 1259 OID 16464)
+-- Name: group_idгруппа_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public."group_idгруппа_seq"
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public."group_idгруппа_seq" OWNER TO postgres;
+
+--
+-- TOC entry 2962 (class 0 OID 0)
+-- Dependencies: 202
+-- Name: group_idгруппа_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public."group_idгруппа_seq" OWNED BY public."group".idgroup;
+
+
+--
+-- TOC entry 203 (class 1259 OID 16466)
+-- Name: student; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.student (
+    idstudent integer NOT NULL,
+    "FIO" text NOT NULL,
+    headman_sign boolean DEFAULT false NOT NULL,
+    idgroup integer NOT NULL
+);
+
+
+ALTER TABLE public.student OWNER TO postgres;
+
+--
+-- TOC entry 2813 (class 2604 OID 16473)
+-- Name: group idgroup; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."group" ALTER COLUMN idgroup SET DEFAULT nextval('public."group_idгруппа_seq"'::regclass);
+
+
+--
+-- TOC entry 2952 (class 0 OID 16455)
+-- Dependencies: 200
+-- Data for Name: __EFMigrationsHistory; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+
+
+--
+-- TOC entry 2953 (class 0 OID 16458)
+-- Dependencies: 201
+-- Data for Name: group; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO public."group" (idgroup, name) VALUES (1, 'ДИПРБ 1');
+INSERT INTO public."group" (idgroup, name) VALUES (2, 'ДИПРБ 2');
+INSERT INTO public."group" (idgroup, name) VALUES (5, 'qwd');
+INSERT INTO public."group" (idgroup, name) VALUES (9, 'цуа');
+
+
+--
+-- TOC entry 2955 (class 0 OID 16466)
+-- Dependencies: 203
+-- Data for Name: student; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO public.student (idstudent, "FIO", headman_sign, idgroup) VALUES (7178, 'студент2', false, 1);
+INSERT INTO public.student (idstudent, "FIO", headman_sign, idgroup) VALUES (78783, 'студент3', true, 2);
+INSERT INTO public.student (idstudent, "FIO", headman_sign, idgroup) VALUES (78785, 'студент4', false, 2);
+INSERT INTO public.student (idstudent, "FIO", headman_sign, idgroup) VALUES (1824, 'студент1', true, 1);
+
+
+--
+-- TOC entry 2963 (class 0 OID 0)
+-- Dependencies: 202
+-- Name: group_idгруппа_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public."group_idгруппа_seq"', 9, true);
+
+
+--
+-- TOC entry 2816 (class 2606 OID 16475)
+-- Name: __EFMigrationsHistory PK___EFMigrationsHistory; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."__EFMigrationsHistory"
+    ADD CONSTRAINT "PK___EFMigrationsHistory" PRIMARY KEY ("MigrationId");
+
+
+--
+-- TOC entry 2818 (class 2606 OID 16477)
+-- Name: group group_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."group"
+    ADD CONSTRAINT group_pkey PRIMARY KEY (idgroup);
+
+
+--
+-- TOC entry 2820 (class 2606 OID 16479)
+-- Name: student student_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.student
+    ADD CONSTRAINT student_pkey PRIMARY KEY (idstudent);
+
+
+--
+-- TOC entry 2821 (class 2606 OID 16480)
+-- Name: student student_idгруппа_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.student
+    ADD CONSTRAINT "student_idгруппа_fkey" FOREIGN KEY (idgroup) REFERENCES public."group"(idgroup);
+
+
+-- Completed on 2021-07-01 23:50:58 +04
+
+--
+-- PostgreSQL database dump complete
+--
+

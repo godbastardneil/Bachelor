@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="/css/stile.css" rel="stylesheet">
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/product.js"></script>
+
+    <title> ЛАБА_17 </title>
+</head>
+
+<body>
+    <header class="header">
+        <section>
+            <h1 class="header_text" id="header_to_main">
+                ТОВАРЫ
+            </h1>
+        </section>
+        <section class="buttons">
+            <form>
+                <button type="button" class="button" id="open_deals"> СДЕЛКИ </button>
+                <button type="button" class="button" id="open_buyers"> ПОКУПАТЕЛИ </button>
+            </form>
+        </section>
+    </header>
+
+    <section class="main_content">
+        <section>
+            <div class="search">
+                <h3 class="header_text" id="header_to_search"> ПОИСК </h3>
+                <form>
+                    <input id="search_id" placeholder="Номер" type="number">
+
+                    <input id="search_name" placeholder="Наименование" type="text">
+
+                    <input id="search_opt" placeholder="Оптовая цена" type="number">
+
+                    <input id="search_roz" placeholder="Розничная цена" type="number">
+
+                    <input id="search_opisanie" placeholder="Описание" type="text">
+
+
+                    <button type="button" class="button" id="search_button"> Поиск </button>
+                </form>
+            </div>
+        </section>
+        <section>
+            <div class="info_product">
+                <h3 class="header_text" id="header_table_of_product_info"> СПИСОК </h3>
+                <table id="table_of_product_info" border="1">
+                    <thead>
+                        <tr>
+                            <th>№</th>
+                            <th>Наименование</th>
+                            <th>Оптовая цена</th>
+                            <th>Розничная цена</th>
+                            <th>Описание</th>
+                            <th>Действие</th>
+                        </tr>
+                    </thead>
+                    <tbody class="tbody-mp"></tbody>
+                </table>
+                <button type="button" class="button" id="init_button"> ДОБАВИТЬ </button>
+            </div>
+        </section>
+    </section>
+    </section>
+</body>
+
+</html>

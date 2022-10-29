@@ -1,0 +1,56 @@
+﻿@page "/Group/Update/{idgroup}"
+@attribute [Authorize]
+
+@using Lab4.Client.Services
+@using Lab4.Shared.Domain
+@using Microsoft.AspNetCore.Authorization
+
+@inject NavigationManager Navigation
+@inject GroupService GroupService
+
+<div class="text-center">
+    <h1 class="display-4">Изменение Группы</h1>
+    <EditForm Model="Group">
+        <p>
+            <label for="Name"><b>Название:</b></label><br>
+            <InputText name="Name" id="Name" class="w-100" @bind-Value="@Group.name" required />
+        </p>
+        <input type="submit" class="btn btn-success" value="Изменить" @onclick="() => Update(Group)">
+        <a class="btn btn-danger" href="/Group">Назад</a>
+    </EditForm>
+</div>
+
+@code {
+    [Parameter]
+    public string idgroup { get; set; }
+
+    private GroupModel Group { get; set; }
+    = new GroupModel();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            Group = await GroupService.GetGroupById(idgroup);
+        }
+        catch (HttpRequestException)
+        {
+            BackToGroup();
+        }
+    }
+
+    private async Task Update(GroupModel Group)
+    {
+        if (!String.IsNullOrWhiteSpace(Group.name))
+        {
+            await GroupService.UpdateGroup(Group);
+            BackToGroup();
+        }
+    }
+
+    private void BackToGroup()
+    {
+        Navigation.NavigateTo("/Group");
+        return;
+    }
+}

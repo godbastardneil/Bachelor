@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/">
+        <file>windows.jpg</file>
+        <file>city.jpg</file>
+        <file>all.png</file>
+    </qresource>
+</RCC>

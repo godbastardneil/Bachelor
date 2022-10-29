@@ -1,0 +1,134 @@
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 13.3 (Debian 13.3-1.pgdg100+1)
+-- Dumped by pg_dump version 13.3 (Debian 13.3-1.pgdg100+1)
+
+-- Started on 2021-07-01 23:53:46 +04
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- TOC entry 2950 (class 1262 OID 17484)
+-- Name: lab_5; Type: DATABASE; Schema: -; Owner: postgres
+--
+
+CREATE DATABASE lab_5 WITH TEMPLATE = template0 ENCODING = 'UTF8' LOCALE = 'ru_RU.UTF-8';
+
+
+ALTER DATABASE lab_5 OWNER TO postgres;
+
+\connect lab_5
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- TOC entry 200 (class 1259 OID 17485)
+-- Name: birthdays; Type: TABLE; Schema: public; Owner: user
+--
+
+CREATE TABLE public.birthdays (
+    person text NOT NULL,
+    birthday date NOT NULL
+);
+
+
+ALTER TABLE public.birthdays OWNER TO "user";
+
+--
+-- TOC entry 201 (class 1259 OID 17491)
+-- Name: databases; Type: TABLE; Schema: public; Owner: user
+--
+
+CREATE TABLE public.databases (
+    is_open_source boolean,
+    dbms_name text
+);
+
+
+ALTER TABLE public.databases OWNER TO "user";
+
+--
+-- TOC entry 202 (class 1259 OID 17497)
+-- Name: test_bool; Type: TABLE; Schema: public; Owner: user
+--
+
+CREATE TABLE public.test_bool (
+    a boolean,
+    b text
+);
+
+
+ALTER TABLE public.test_bool OWNER TO "user";
+
+--
+-- TOC entry 2942 (class 0 OID 17485)
+-- Dependencies: 200
+-- Data for Name: birthdays; Type: TABLE DATA; Schema: public; Owner: user
+--
+
+INSERT INTO public.birthdays (person, birthday) VALUES ('Ivan Ivanov', '1955-03-23');
+INSERT INTO public.birthdays (person, birthday) VALUES ('Petr Petrov', '1971-03-19');
+INSERT INTO public.birthdays (person, birthday) VALUES ('Andrey Sidorov', '1987-08-12');
+INSERT INTO public.birthdays (person, birthday) VALUES ('Neil Izmailov', '2000-04-18');
+INSERT INTO public.birthdays (person, birthday) VALUES ('Kosta Kuvaizev', '2000-03-02');
+
+
+--
+-- TOC entry 2943 (class 0 OID 17491)
+-- Dependencies: 201
+-- Data for Name: databases; Type: TABLE DATA; Schema: public; Owner: user
+--
+
+INSERT INTO public.databases (is_open_source, dbms_name) VALUES (true, 'PostrgeSQL');
+INSERT INTO public.databases (is_open_source, dbms_name) VALUES (false, 'Oracle');
+INSERT INTO public.databases (is_open_source, dbms_name) VALUES (true, 'MySQL');
+INSERT INTO public.databases (is_open_source, dbms_name) VALUES (false, 'MS SQL Server');
+
+
+--
+-- TOC entry 2944 (class 0 OID 17497)
+-- Dependencies: 202
+-- Data for Name: test_bool; Type: TABLE DATA; Schema: public; Owner: user
+--
+
+INSERT INTO public.test_bool (a, b) VALUES (true, 'yes');
+INSERT INTO public.test_bool (a, b) VALUES (true, 'true');
+INSERT INTO public.test_bool (a, b) VALUES (true, 'true');
+INSERT INTO public.test_bool (a, b) VALUES (true, 'true');
+INSERT INTO public.test_bool (a, b) VALUES (true, 'true');
+INSERT INTO public.test_bool (a, b) VALUES (true, 'truth');
+INSERT INTO public.test_bool (a, b) VALUES (true, 'true');
+INSERT INTO public.test_bool (a, b) VALUES (true, 'true');
+INSERT INTO public.test_bool (a, b) VALUES (true, 'true');
+
+
+-- Completed on 2021-07-01 23:53:47 +04
+
+--
+-- PostgreSQL database dump complete
+--
+

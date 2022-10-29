@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="/css/stile.css" rel="stylesheet">
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/apprentice_lab.js"></script>
+
+    <title> Практика </title>
+</head>
+
+<body>
+    <header class="header">
+        <section>
+            <h1 class="header_text" id="header_to_main"> Лабораторная </h1>
+        </section>
+        <section class="buttons">
+            <form>
+                <button type="button" class="button" id="out_to_stat"> Назад </button>
+            </form>
+        </section>
+    </header>
+
+    <section class="main_content">
+        <section class="main_content_for_pages">
+            <div id="div_of_lab" class="test">
+                <div id="div_question">
+                </div>
+                <div id="div_of_table">
+                    <h3> Таблица - user_table </h3>
+                    <table id="table_of_text_info" border="1">
+                        <thead>
+                            <tr>
+                                <th>col_1</th>
+                                <th>col_2</th>
+                                <th>col_3</th>
+                                <th>col_4</th>
+                            </tr>
+                        </thead>
+                        <tbody class="tbody-mp"></tbody>
+                    </table>
+                </div>
+                <div id="div_alert_some">
+                </div>
+                <div id="div_of_query">
+                    <p>
+                        <b>Ввести запрос:</b><br>
+                        <input class="input_query" id="input_query" type="text" size="100">
+                    </p>
+
+                </div>
+            </div>
+        </section>
+    </section>
+</body>
+
+</html>

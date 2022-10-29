@@ -1,0 +1,6 @@
+# depslib dependency file v1.0
+1562319158 source:c:\users\user\desktop\gdfg\c++\lab16\main.cpp
+	<iostream>
+	<math.h>
+	<windows.h>
+

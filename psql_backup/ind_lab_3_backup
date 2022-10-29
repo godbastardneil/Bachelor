@@ -1,0 +1,389 @@
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 13.3 (Debian 13.3-1.pgdg100+1)
+-- Dumped by pg_dump version 13.3 (Debian 13.3-1.pgdg100+1)
+
+-- Started on 2021-07-01 23:53:05 +04
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- TOC entry 2983 (class 1262 OID 16853)
+-- Name: ind_lab_3; Type: DATABASE; Schema: -; Owner: postgres
+--
+
+CREATE DATABASE ind_lab_3 WITH TEMPLATE = template0 ENCODING = 'UTF8' LOCALE = 'ru_RU.UTF-8';
+
+
+ALTER DATABASE ind_lab_3 OWNER TO postgres;
+
+\connect ind_lab_3
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- TOC entry 200 (class 1259 OID 16854)
+-- Name: товар; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."товар" (
+    "наименование" character(50) NOT NULL,
+    "описание" text,
+    "idтовар" integer NOT NULL
+);
+
+
+ALTER TABLE public."товар" OWNER TO postgres;
+
+--
+-- TOC entry 201 (class 1259 OID 16860)
+-- Name: инфо_товар; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."инфо_товар" (
+    "наименование" character(50),
+    "описание" text,
+    "idтовар" integer,
+    "опт_цена" integer NOT NULL,
+    "роз_цена" integer NOT NULL,
+    "адрес_складов" text[],
+    CONSTRAINT "инфо_товар_опт_цена_check" CHECK (("опт_цена" > 0)),
+    CONSTRAINT "инфо_товар_роз_цена_check" CHECK (("роз_цена" > 0))
+)
+INHERITS (public."товар");
+
+
+ALTER TABLE public."инфо_товар" OWNER TO postgres;
+
+--
+-- TOC entry 202 (class 1259 OID 16868)
+-- Name: инфо_товар_idтовар_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public."инфо_товар_idтовар_seq"
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public."инфо_товар_idтовар_seq" OWNER TO postgres;
+
+--
+-- TOC entry 2984 (class 0 OID 0)
+-- Dependencies: 202
+-- Name: инфо_товар_idтовар_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public."инфо_товар_idтовар_seq" OWNED BY public."инфо_товар"."idтовар";
+
+
+--
+-- TOC entry 203 (class 1259 OID 16870)
+-- Name: покупатель; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."покупатель" (
+    "телефон" character(12) NOT NULL,
+    "описание" text,
+    "адрес" text,
+    "idпокупатель" integer NOT NULL,
+    "конт_лицо" character(12) NOT NULL
+);
+
+
+ALTER TABLE public."покупатель" OWNER TO postgres;
+
+--
+-- TOC entry 204 (class 1259 OID 16876)
+-- Name: покупатель_idпокупатель_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public."покупатель_idпокупатель_seq"
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public."покупатель_idпокупатель_seq" OWNER TO postgres;
+
+--
+-- TOC entry 2985 (class 0 OID 0)
+-- Dependencies: 204
+-- Name: покупатель_idпокупатель_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public."покупатель_idпокупатель_seq" OWNED BY public."покупатель"."idпокупатель";
+
+
+--
+-- TOC entry 205 (class 1259 OID 16878)
+-- Name: сделка; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."сделка" (
+    "дата_сделки" date NOT NULL,
+    "idпокупатель" integer NOT NULL,
+    "idтовар" integer NOT NULL,
+    "количество" integer NOT NULL,
+    "признак_опта" boolean NOT NULL,
+    "idсделка" integer NOT NULL
+);
+
+
+ALTER TABLE public."сделка" OWNER TO postgres;
+
+--
+-- TOC entry 206 (class 1259 OID 16881)
+-- Name: сделка_сделка_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public."сделка_сделка_seq"
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public."сделка_сделка_seq" OWNER TO postgres;
+
+--
+-- TOC entry 2986 (class 0 OID 0)
+-- Dependencies: 206
+-- Name: сделка_сделка_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public."сделка_сделка_seq" OWNED BY public."сделка"."idсделка";
+
+
+--
+-- TOC entry 207 (class 1259 OID 16883)
+-- Name: товар_idтовар_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public."товар_idтовар_seq"
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public."товар_idтовар_seq" OWNER TO postgres;
+
+--
+-- TOC entry 2987 (class 0 OID 0)
+-- Dependencies: 207
+-- Name: товар_idтовар_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public."товар_idтовар_seq" OWNED BY public."товар"."idтовар";
+
+
+--
+-- TOC entry 2825 (class 2604 OID 16885)
+-- Name: инфо_товар idтовар; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."инфо_товар" ALTER COLUMN "idтовар" SET DEFAULT nextval('public."инфо_товар_idтовар_seq"'::regclass);
+
+
+--
+-- TOC entry 2828 (class 2604 OID 16886)
+-- Name: покупатель idпокупатель; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."покупатель" ALTER COLUMN "idпокупатель" SET DEFAULT nextval('public."покупатель_idпокупатель_seq"'::regclass);
+
+
+--
+-- TOC entry 2829 (class 2604 OID 16887)
+-- Name: сделка idсделка; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."сделка" ALTER COLUMN "idсделка" SET DEFAULT nextval('public."сделка_сделка_seq"'::regclass);
+
+
+--
+-- TOC entry 2824 (class 2604 OID 16888)
+-- Name: товар idтовар; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."товар" ALTER COLUMN "idтовар" SET DEFAULT nextval('public."товар_idтовар_seq"'::regclass);
+
+
+--
+-- TOC entry 2971 (class 0 OID 16860)
+-- Dependencies: 201
+-- Data for Name: инфо_товар; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO public."инфо_товар" ("наименование", "описание", "idтовар", "опт_цена", "роз_цена", "адрес_складов") VALUES ('Товар №1                                          ', NULL, 1, 50, 150, '{"Магистральная №47","Пушикина-Калатушкина №1"}');
+INSERT INTO public."инфо_товар" ("наименование", "описание", "idтовар", "опт_цена", "роз_цена", "адрес_складов") VALUES ('Товар №2                                          ', NULL, 2, 60, 160, '{"Магистральная №48","Пушикина-Калатушкина №2"}');
+INSERT INTO public."инфо_товар" ("наименование", "описание", "idтовар", "опт_цена", "роз_цена", "адрес_складов") VALUES ('Товар №3                                          ', NULL, 3, 70, 170, '{"Магистральная №49","Пушикина-Калатушкина №3"}');
+INSERT INTO public."инфо_товар" ("наименование", "описание", "idтовар", "опт_цена", "роз_цена", "адрес_складов") VALUES ('Товар №4                                          ', NULL, 4, 80, 180, '{"Магистральная №50","Пушикина-Калатушкина №4"}');
+INSERT INTO public."инфо_товар" ("наименование", "описание", "idтовар", "опт_цена", "роз_цена", "адрес_складов") VALUES ('Товар №5                                          ', NULL, 5, 90, 190, '{"Магистральная №51","Пушикина-Калатушкина №5"}');
+INSERT INTO public."инфо_товар" ("наименование", "описание", "idтовар", "опт_цена", "роз_цена", "адрес_складов") VALUES ('Товар №6                                          ', NULL, 6, 100, 200, '{"Магистральная №52","Пушикина-Калатушкина №6"}');
+
+
+--
+-- TOC entry 2973 (class 0 OID 16870)
+-- Dependencies: 203
+-- Data for Name: покупатель; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO public."покупатель" ("телефон", "описание", "адрес", "idпокупатель", "конт_лицо") VALUES ('79996014435 ', NULL, 'магистральная №47', 1, '79996014445 ');
+INSERT INTO public."покупатель" ("телефон", "описание", "адрес", "idпокупатель", "конт_лицо") VALUES ('79996014436 ', NULL, 'магистральная №48', 2, '79996014446 ');
+INSERT INTO public."покупатель" ("телефон", "описание", "адрес", "idпокупатель", "конт_лицо") VALUES ('79996014437 ', NULL, 'магистральная №49', 3, '79996014447 ');
+INSERT INTO public."покупатель" ("телефон", "описание", "адрес", "idпокупатель", "конт_лицо") VALUES ('79996014438 ', NULL, 'магистральная №50', 4, '79996014448 ');
+
+
+--
+-- TOC entry 2975 (class 0 OID 16878)
+-- Dependencies: 205
+-- Data for Name: сделка; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO public."сделка" ("дата_сделки", "idпокупатель", "idтовар", "количество", "признак_опта", "idсделка") VALUES ('2020-04-20', 1, 1, 120, true, 1);
+INSERT INTO public."сделка" ("дата_сделки", "idпокупатель", "idтовар", "количество", "признак_опта", "idсделка") VALUES ('2020-04-21', 2, 2, 10, false, 2);
+INSERT INTO public."сделка" ("дата_сделки", "idпокупатель", "idтовар", "количество", "признак_опта", "idсделка") VALUES ('2020-04-22', 3, 3, 6, false, 3);
+INSERT INTO public."сделка" ("дата_сделки", "idпокупатель", "idтовар", "количество", "признак_опта", "idсделка") VALUES ('2020-04-23', 4, 4, 150, true, 4);
+INSERT INTO public."сделка" ("дата_сделки", "idпокупатель", "idтовар", "количество", "признак_опта", "idсделка") VALUES ('2020-04-24', 1, 5, 100, true, 5);
+
+
+--
+-- TOC entry 2970 (class 0 OID 16854)
+-- Dependencies: 200
+-- Data for Name: товар; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+
+
+--
+-- TOC entry 2988 (class 0 OID 0)
+-- Dependencies: 202
+-- Name: инфо_товар_idтовар_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public."инфо_товар_idтовар_seq"', 1, false);
+
+
+--
+-- TOC entry 2989 (class 0 OID 0)
+-- Dependencies: 204
+-- Name: покупатель_idпокупатель_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public."покупатель_idпокупатель_seq"', 1, false);
+
+
+--
+-- TOC entry 2990 (class 0 OID 0)
+-- Dependencies: 206
+-- Name: сделка_сделка_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public."сделка_сделка_seq"', 1, false);
+
+
+--
+-- TOC entry 2991 (class 0 OID 0)
+-- Dependencies: 207
+-- Name: товар_idтовар_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public."товар_idтовар_seq"', 1, false);
+
+
+--
+-- TOC entry 2833 (class 2606 OID 16890)
+-- Name: инфо_товар инфо_товар_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."инфо_товар"
+    ADD CONSTRAINT "инфо_товар_pkey" PRIMARY KEY ("idтовар");
+
+
+--
+-- TOC entry 2835 (class 2606 OID 16892)
+-- Name: покупатель покупатель_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."покупатель"
+    ADD CONSTRAINT "покупатель_pkey" PRIMARY KEY ("idпокупатель");
+
+
+--
+-- TOC entry 2837 (class 2606 OID 16894)
+-- Name: сделка сделка_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."сделка"
+    ADD CONSTRAINT "сделка_pkey" PRIMARY KEY ("idсделка");
+
+
+--
+-- TOC entry 2831 (class 2606 OID 16896)
+-- Name: товар товар_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."товар"
+    ADD CONSTRAINT "товар_pkey" PRIMARY KEY ("idтовар");
+
+
+--
+-- TOC entry 2838 (class 2606 OID 16897)
+-- Name: сделка сделка_idпокупатель_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."сделка"
+    ADD CONSTRAINT "сделка_idпокупатель_fkey" FOREIGN KEY ("idпокупатель") REFERENCES public."покупатель"("idпокупатель");
+
+
+--
+-- TOC entry 2839 (class 2606 OID 16902)
+-- Name: сделка сделка_idтовар_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."сделка"
+    ADD CONSTRAINT "сделка_idтовар_fkey" FOREIGN KEY ("idтовар") REFERENCES public."инфо_товар"("idтовар");
+
+
+-- Completed on 2021-07-01 23:53:05 +04
+
+--
+-- PostgreSQL database dump complete
+--
+

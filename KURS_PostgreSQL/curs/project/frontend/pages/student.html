@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/student.js"></script>
+    <link href="/css/stile.css" rel="stylesheet">
+
+    <title>СТУДЕНТ</title>
+</head>
+
+<body>
+    <header class="header">
+        <section>
+            <h1 class="header_text" id="header_to_main"> СТУДЕНТ </h1>
+        </section>
+        <section class="buttons">
+            <form>
+                <button type="button" class="button" id="out_to_init"> Выйти </button>
+            </form>
+        </section>
+    </header>
+
+    <section class="main_content">
+        <section class="main_content_for_pages" id="main">
+            <div id="main_stat">
+                <table id="table_of_stat" border="1">
+                    <thead>
+                        <tr>
+                            <th>Название дисциплин</th>
+                            <th>ФИО Приподавателя</th>
+                            <th>Дата Экзамена</th>
+                            <th>Оценка</th>
+                            <th>Даты сдач</th>
+                        </tr>
+                    </thead>
+                    <tbody class="tbody-mp"></tbody>
+                </table>
+            </div>
+        </section>
+    </section>
+</body>
+
+</html>

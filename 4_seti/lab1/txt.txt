@@ -1,0 +1,1 @@
+text of txt from txt.txt

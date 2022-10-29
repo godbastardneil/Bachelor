@@ -1,0 +1,399 @@
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 13.3 (Debian 13.3-1.pgdg100+1)
+-- Dumped by pg_dump version 13.3 (Debian 13.3-1.pgdg100+1)
+
+-- Started on 2021-07-01 23:56:53 +04
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- TOC entry 2970 (class 1262 OID 17080)
+-- Name: lab_12_2; Type: DATABASE; Schema: -; Owner: postgres
+--
+
+CREATE DATABASE lab_12_2 WITH TEMPLATE = template0 ENCODING = 'UTF8' LOCALE = 'ru_RU.UTF-8';
+
+
+ALTER DATABASE lab_12_2 OWNER TO postgres;
+
+\connect lab_12_2
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- TOC entry 206 (class 1255 OID 17081)
+-- Name: count_citizen(character varying); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.count_citizen(hname character varying) RETURNS integer
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+hid integer;
+res integer;
+BEGIN
+	res := -1;
+	hid := (select id_hotel from hotel where name = hname);
+	if (hid is NOT NULL) then
+		res := (select count(*) from participant where id_hotel = hid);
+	end if;
+	RETURN res;
+END;
+$$;
+
+
+ALTER FUNCTION public.count_citizen(hname character varying) OWNER TO postgres;
+
+--
+-- TOC entry 207 (class 1255 OID 17082)
+-- Name: factorial(integer); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.factorial(kol integer) RETURNS TABLE(n_ integer)
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+k integer;
+n integer;
+tmp integer;
+BEGIN
+	n := 0;
+	WHILE (n < kol) LOOP
+		k := 0;
+		tmp := 1;
+		
+		WHILE (k < n) LOOP
+			tmp := tmp * ((n-k));
+
+			k := k + 1;
+		END LOOP;
+		
+		RETURN QUERY (select tmp);
+		n := n + 1;
+	END LOOP;
+END;
+$$;
+
+
+ALTER FUNCTION public.factorial(kol integer) OWNER TO postgres;
+
+--
+-- TOC entry 208 (class 1255 OID 17083)
+-- Name: fibonacci(integer); Type: FUNCTION; Schema: public; Owner: user
+--
+
+CREATE FUNCTION public.fibonacci(n integer) RETURNS TABLE("Число Фибоначчи" numeric)
+    LANGUAGE plpgsql
+    AS $$
+DECLARE 
+	i integer;
+	one numeric;
+	two numeric;
+BEGIN	
+	two := 1;
+	return query (SELECT two);
+	if n > 2 then
+		i := 3;
+		one := 1;
+		return query (SELECT one);
+		while n >= i loop
+			two := one + two;
+			one := two - one;
+			i := i + 1;
+			return query (SELECT two);	
+		end loop;
+	end if;
+END;
+$$;
+
+
+ALTER FUNCTION public.fibonacci(n integer) OWNER TO "user";
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- TOC entry 200 (class 1259 OID 17084)
+-- Name: hotel; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.hotel (
+    id_hotel integer NOT NULL,
+    name character varying(20),
+    address character varying(50)
+);
+
+
+ALTER TABLE public.hotel OWNER TO postgres;
+
+--
+-- TOC entry 201 (class 1259 OID 17087)
+-- Name: hotel_id_hotel_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.hotel_id_hotel_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.hotel_id_hotel_seq OWNER TO postgres;
+
+--
+-- TOC entry 2971 (class 0 OID 0)
+-- Dependencies: 201
+-- Name: hotel_id_hotel_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.hotel_id_hotel_seq OWNED BY public.hotel.id_hotel;
+
+
+--
+-- TOC entry 202 (class 1259 OID 17089)
+-- Name: organization; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.organization (
+    id_organization integer NOT NULL,
+    name character varying(50)
+);
+
+
+ALTER TABLE public.organization OWNER TO postgres;
+
+--
+-- TOC entry 203 (class 1259 OID 17092)
+-- Name: organization_id_organization_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.organization_id_organization_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.organization_id_organization_seq OWNER TO postgres;
+
+--
+-- TOC entry 2972 (class 0 OID 0)
+-- Dependencies: 203
+-- Name: organization_id_organization_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.organization_id_organization_seq OWNED BY public.organization.id_organization;
+
+
+--
+-- TOC entry 204 (class 1259 OID 17094)
+-- Name: participant; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.participant (
+    id_participant integer NOT NULL,
+    fio character varying(50),
+    id_organization integer,
+    id_hotel integer
+);
+
+
+ALTER TABLE public.participant OWNER TO postgres;
+
+--
+-- TOC entry 205 (class 1259 OID 17097)
+-- Name: participant_id_participants_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.participant_id_participants_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.participant_id_participants_seq OWNER TO postgres;
+
+--
+-- TOC entry 2973 (class 0 OID 0)
+-- Dependencies: 205
+-- Name: participant_id_participants_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.participant_id_participants_seq OWNED BY public.participant.id_participant;
+
+
+--
+-- TOC entry 2818 (class 2604 OID 17099)
+-- Name: hotel id_hotel; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.hotel ALTER COLUMN id_hotel SET DEFAULT nextval('public.hotel_id_hotel_seq'::regclass);
+
+
+--
+-- TOC entry 2819 (class 2604 OID 17100)
+-- Name: organization id_organization; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.organization ALTER COLUMN id_organization SET DEFAULT nextval('public.organization_id_organization_seq'::regclass);
+
+
+--
+-- TOC entry 2820 (class 2604 OID 17101)
+-- Name: participant id_participant; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.participant ALTER COLUMN id_participant SET DEFAULT nextval('public.participant_id_participants_seq'::regclass);
+
+
+--
+-- TOC entry 2959 (class 0 OID 17084)
+-- Dependencies: 200
+-- Data for Name: hotel; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO public.hotel (id_hotel, name, address) VALUES (1, 'Астория', 'ул. Новолесная, строение 5');
+INSERT INTO public.hotel (id_hotel, name, address) VALUES (2, 'Азимут', 'ул. Заводская, строение 138');
+INSERT INTO public.hotel (id_hotel, name, address) VALUES (3, 'Флоренция', 'ул. Зеленая, дом 46');
+INSERT INTO public.hotel (id_hotel, name, address) VALUES (4, 'Сафари', 'бульвар Солнечный, строение 8');
+INSERT INTO public.hotel (id_hotel, name, address) VALUES (5, 'ооо', 'ул. Новолесная, строение 5');
+
+
+--
+-- TOC entry 2961 (class 0 OID 17089)
+-- Dependencies: 202
+-- Data for Name: organization; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO public.organization (id_organization, name) VALUES (1, 'Астраханский гос-технический университет');
+INSERT INTO public.organization (id_organization, name) VALUES (2, 'Астраханский государственный университет');
+INSERT INTO public.organization (id_organization, name) VALUES (3, 'Саратовская академия права');
+INSERT INTO public.organization (id_organization, name) VALUES (4, 'Волгоградская медицинская академия');
+INSERT INTO public.organization (id_organization, name) VALUES (5, 'Московский государственный университет');
+INSERT INTO public.organization (id_organization, name) VALUES (6, 'Архангельский государственный университет');
+
+
+--
+-- TOC entry 2963 (class 0 OID 17094)
+-- Dependencies: 204
+-- Data for Name: participant; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO public.participant (id_participant, fio, id_organization, id_hotel) VALUES (1, 'Иванов Иван Иванович', 1, 2);
+INSERT INTO public.participant (id_participant, fio, id_organization, id_hotel) VALUES (2, 'Петров Петр Петрович', 1, 1);
+INSERT INTO public.participant (id_participant, fio, id_organization, id_hotel) VALUES (3, 'Сидоров Сидор Сидорович', 1, 1);
+INSERT INTO public.participant (id_participant, fio, id_organization, id_hotel) VALUES (4, 'Александров Алекстандр', 2, 2);
+INSERT INTO public.participant (id_participant, fio, id_organization, id_hotel) VALUES (5, 'Михайлов Михаил Михайлович', 3, 1);
+INSERT INTO public.participant (id_participant, fio, id_organization, id_hotel) VALUES (6, 'Юрьев Юрий Юрьевич', 4, 3);
+INSERT INTO public.participant (id_participant, fio, id_organization, id_hotel) VALUES (7, 'Андреев Андрей Андреевич', 4, 4);
+INSERT INTO public.participant (id_participant, fio, id_organization, id_hotel) VALUES (8, 'Степанов Степан Степанович', 5, 3);
+INSERT INTO public.participant (id_participant, fio, id_organization, id_hotel) VALUES (9, 'Максимов Максим Максимович', 6, 2);
+
+
+--
+-- TOC entry 2974 (class 0 OID 0)
+-- Dependencies: 201
+-- Name: hotel_id_hotel_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.hotel_id_hotel_seq', 24, true);
+
+
+--
+-- TOC entry 2975 (class 0 OID 0)
+-- Dependencies: 203
+-- Name: organization_id_organization_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.organization_id_organization_seq', 24, true);
+
+
+--
+-- TOC entry 2976 (class 0 OID 0)
+-- Dependencies: 205
+-- Name: participant_id_participants_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.participant_id_participants_seq', 27, true);
+
+
+--
+-- TOC entry 2822 (class 2606 OID 17103)
+-- Name: hotel hotel_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.hotel
+    ADD CONSTRAINT hotel_pkey PRIMARY KEY (id_hotel);
+
+
+--
+-- TOC entry 2824 (class 2606 OID 17105)
+-- Name: organization organization_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.organization
+    ADD CONSTRAINT organization_pkey PRIMARY KEY (id_organization);
+
+
+--
+-- TOC entry 2826 (class 2606 OID 17107)
+-- Name: participant participant_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.participant
+    ADD CONSTRAINT participant_pkey PRIMARY KEY (id_participant);
+
+
+--
+-- TOC entry 2827 (class 2606 OID 17108)
+-- Name: participant participant_id_hotel_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.participant
+    ADD CONSTRAINT participant_id_hotel_fkey FOREIGN KEY (id_hotel) REFERENCES public.hotel(id_hotel);
+
+
+--
+-- TOC entry 2828 (class 2606 OID 17113)
+-- Name: participant participant_id_organization_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.participant
+    ADD CONSTRAINT participant_id_organization_fkey FOREIGN KEY (id_organization) REFERENCES public.organization(id_organization);
+
+
+-- Completed on 2021-07-01 23:56:53 +04
+
+--
+-- PostgreSQL database dump complete
+--
+

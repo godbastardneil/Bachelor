@@ -1,0 +1,131 @@
+body {
+    margin: 0;
+    font-family: sans-serif;
+    background: rgb(237, 238, 240)
+}
+
+.header_content_infomenu {
+    /* Цвет фона */
+    background: rgb(212, 212, 212);
+}
+
+.no_link {
+    color: black;
+}
+
+header {
+    /* Для старых браузеров */
+    display: block;
+    /* Цетровка*/
+    text-align: center;
+    /* Цвет фона */
+    background: white;
+    /* Цвет текста */
+    color: black;
+    /* Границы */
+    /* Параметры границы */
+    border-bottom: 1px solid rgb(212, 212, 212);
+    /* Размытие */
+    box-shadow: 0 1px 10px rgb(0 0 0 / 10%);
+    /* Возможность прокрутки */
+    position: sticky;
+    top: 0;
+}
+
+h1 {
+    font-size: 24pt;
+    margin: 0;
+    /* Цетровка*/
+    text-align: center;
+}
+
+h3 {
+    border-top: 1px solid rgb(212, 212, 212);
+    border-bottom: 1px solid rgb(212, 212, 212);
+    margin: 0;
+    /* Цетровка*/
+    text-align: center;
+}
+
+nav a {
+    border: 1px solid rgb(212, 212, 212);
+    padding-left: 5%;
+    padding-right: 5%;
+}
+
+p {
+    /* Отступ первой строки в пикселах */
+    text-indent: 20px;
+    line-height: 1.5;
+}
+
+.main_content {
+    margin-left: 30pt;
+    margin-right: 30pt;
+}
+
+.main_content section div {
+    background: white;
+    padding: 15pt;
+    overflow: hidden;
+    /* Границы */
+    /* Параметры границы */
+    border-bottom: 1px solid rgb(212, 212, 212);
+    border-radius: 5px;
+    /* Размытие */
+    box-shadow: 0 1px 10px rgb(0 0 0 / 10%);
+}
+
+#about_me_part {
+    margin-top: 10pt;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+img {
+    border-radius: 5px;
+}
+
+.about_me {
+    width: 75%;
+}
+
+#my_works_part {
+    margin-top: 10pt;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.all_curs {
+    margin-top: 10pt;
+    text-align: center;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.list_curs {
+    width: 30%;
+    height: 100%;
+}
+
+#my_files_part {
+    margin-top: 10pt;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.all_files {
+    margin-top: 10pt;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    flex-direction: column;
+    flex-wrap: wrap;
+}

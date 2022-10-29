@@ -1,0 +1,40 @@
+﻿@page "/Group/Create"
+@attribute [Authorize]
+
+@using Lab4.Client.Services
+@using Lab4.Shared.DTO
+@using Microsoft.AspNetCore.Authorization
+
+@inject NavigationManager Navigation
+@inject GroupService GroupService
+
+<div class="text-center">
+    <h1 class="display-4">Добавление нового списка</h1>
+    <EditForm Model="Group">
+        <p>
+            <label for="Name"><b>Название:</b></label><br>
+            <InputText name="Name" id="Name" class="w-100" @bind-Value="@Group.name" required />
+        </p>
+        <input type="submit" class="btn btn-success" value="Добавить" @onclick="() => Create(Group)">
+        <a class="btn btn-danger" href="/Group">Назад</a>
+    </EditForm>
+</div>
+
+@code {
+    private CreateGroupDTO Group { get; set; }
+            = new CreateGroupDTO();
+    private async Task Create(CreateGroupDTO Group)
+    {
+        if (!String.IsNullOrWhiteSpace(Group.name))
+        {
+            await GroupService.CreateGroup(Group);
+            BackToGroup();
+        }
+    }
+
+    private void BackToGroup()
+    {
+        Navigation.NavigateTo("/Group");
+        return;
+    }
+}

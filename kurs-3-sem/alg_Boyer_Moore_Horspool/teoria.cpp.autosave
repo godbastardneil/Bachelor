@@ -1,0 +1,30 @@
+#include "teoria.h"
+#include "ui_teoria.h"
+
+teoria::teoria(QWidget *parent) : QWidget(parent), ui(new Ui::teoria)
+{
+    ui->setupUi(this);
+}
+
+teoria::~teoria() { delete ui; }
+
+void teoria::write_teo()
+{
+    if (reader::Instance().read_text(teo))
+    {
+        ui->teo->setText(reader::Instance().get_text());
+    } else { QMessageBox::warning(this, "Ошибка", "Нет файла " + teo); }
+    
+    if (reader::Instance().read_text(slovo))
+    {
+        ui->slovo->setText(reader::Instance().get_text());
+    } else { QMessageBox::warning(this, "Ошибка", "Нет файла " + slovo); }
+}
+
+void teoria::on_teo_anchorClicked(const QUrl &arg1)
+{
+    if (arg1.fileName() == "slovo")
+    {
+        ui->slovo->scrollToAnchor(arg1.fragment());
+    }
+}

@@ -1,3 +1,15 @@
+#build
+build-**-Debug/
+build-**-Release/
+Debug/
+Release/
+ipch/
+
+
+# NodeJS folder
+node_modules/
+
+
 # Prerequisites
 *.d
 
@@ -30,3 +42,8 @@
 *.exe
 *.out
 *.app
+
+# Qt-es
+*.pro.user
+*.pro.user.*
+*build-*

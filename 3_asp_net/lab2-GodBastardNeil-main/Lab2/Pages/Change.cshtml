@@ -1,0 +1,41 @@
+﻿@page  "{id:int}"
+@model ChangeModel
+@{
+    ViewData["Title"] = "Change data";
+    Stud_Info dStud = (Stud_Info)ViewData["dStud"];
+}
+
+<div class="text-center">
+    <h1 class="display-4">Студент</h1>
+
+    <div class="form_data_inc_block">
+        <p class="form_data_inc_block_head_text">Измените данные</p>
+
+        <form class="form_data_inc_style" method="post">
+
+            <snap>
+                <label>Номер зачётки: </label>
+                <input type="number" name="data.Id" value="@dStud.Id" readonly>
+            </snap>
+
+            <snap><input name="data.FIO" value="@dStud.FIO" required></snap>
+
+            <snap>
+                <label>Староста? </label>
+                @if (dStud.IsStar)
+                {
+                    <input type="checkbox" name="data.IsStar" placeholder="Укажите староста ли студент" value="true" checked>
+                } else
+                {
+                    <input type="checkbox" name="data.IsStar" placeholder="Укажите староста ли студент" value="true">
+                }
+
+            </snap>
+
+            <snap><button class="form_inc_data" type="submit" name="form_inc_submit">Ок</button></snap>
+
+            <snap><a class="nav-link text-dark" asp-area="" asp-page="/Index">Отмена</a></snap>
+
+        </form>
+    </div>
+</div>

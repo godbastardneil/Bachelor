@@ -1,0 +1,1827 @@
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 13.3 (Debian 13.3-1.pgdg100+1)
+-- Dumped by pg_dump version 13.3 (Debian 13.3-1.pgdg100+1)
+
+-- Started on 2021-07-01 23:55:24 +04
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- TOC entry 3033 (class 1262 OID 16907)
+-- Name: lab_10; Type: DATABASE; Schema: -; Owner: postgres
+--
+
+CREATE DATABASE lab_10 WITH TEMPLATE = template0 ENCODING = 'UTF8' LOCALE = 'ru_RU.UTF-8';
+
+
+ALTER DATABASE lab_10 OWNER TO postgres;
+
+\connect lab_10
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- TOC entry 200 (class 1259 OID 16908)
+-- Name: aircrafts; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.aircrafts (
+    aircraft_code character(3) NOT NULL,
+    model text NOT NULL,
+    range integer NOT NULL,
+    specifications jsonb,
+    CONSTRAINT aircrafts_range_check CHECK ((range > 0))
+);
+
+
+ALTER TABLE public.aircrafts OWNER TO postgres;
+
+--
+-- TOC entry 201 (class 1259 OID 16915)
+-- Name: airports; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.airports (
+    airport_code character(3) NOT NULL,
+    airport_name text NOT NULL,
+    city text NOT NULL,
+    place jsonb
+);
+
+
+ALTER TABLE public.airports OWNER TO postgres;
+
+--
+-- TOC entry 202 (class 1259 OID 16921)
+-- Name: bookings; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.bookings (
+    book_ref character(6) NOT NULL,
+    book_date timestamp with time zone NOT NULL,
+    total_amount numeric(10,2) NOT NULL
+);
+
+
+ALTER TABLE public.bookings OWNER TO postgres;
+
+--
+-- TOC entry 203 (class 1259 OID 16924)
+-- Name: boording_passes; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.boording_passes (
+    ticket_no character(13) NOT NULL,
+    flight_id integer NOT NULL,
+    boarding_no integer NOT NULL,
+    seat_no character varying(4) NOT NULL
+);
+
+
+ALTER TABLE public.boording_passes OWNER TO postgres;
+
+--
+-- TOC entry 204 (class 1259 OID 16927)
+-- Name: flights; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.flights (
+    flight_id integer NOT NULL,
+    flight_no character(6) NOT NULL,
+    scheduled_departure timestamp with time zone NOT NULL,
+    departure_airport character(3) NOT NULL,
+    arrival_airport character(3) NOT NULL,
+    status character varying(20) NOT NULL,
+    aircraft_code character(3) NOT NULL,
+    actual_departure timestamp with time zone,
+    actual_arrival timestamp with time zone,
+    scheduled_arrival timestamp with time zone NOT NULL,
+    CONSTRAINT flights_check CHECK ((actual_arrival > scheduled_departure)),
+    CONSTRAINT flights_check1 CHECK (((actual_arrival IS NULL) OR ((actual_departure IS NOT NULL) AND (actual_arrival > actual_departure)))),
+    CONSTRAINT flights_status_check CHECK (((status)::text = ANY (ARRAY[('On Time'::character varying)::text, ('Delayed'::character varying)::text, ('Departed'::character varying)::text, ('Arrives'::character varying)::text, ('Scheduled'::character varying)::text, ('Canceled'::character varying)::text])))
+);
+
+
+ALTER TABLE public.flights OWNER TO postgres;
+
+--
+-- TOC entry 205 (class 1259 OID 16933)
+-- Name: flights_flight_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.flights_flight_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.flights_flight_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 3034 (class 0 OID 0)
+-- Dependencies: 205
+-- Name: flights_flight_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.flights_flight_id_seq OWNED BY public.flights.flight_id;
+
+
+--
+-- TOC entry 206 (class 1259 OID 16935)
+-- Name: flights_v; Type: VIEW; Schema: public; Owner: user
+--
+
+CREATE VIEW public.flights_v AS
+ SELECT f.flight_id,
+    f.flight_no,
+    f.scheduled_departure,
+    timezone((dep.place ->> 'timezone'::text), f.scheduled_departure) AS scheduled_departure_local,
+    f.scheduled_arrival,
+    timezone((arr.place ->> 'timezone'::text), f.scheduled_arrival) AS scheduled_arrival_local,
+    (f.scheduled_arrival - f.scheduled_departure) AS scheduled_duration,
+    f.departure_airport,
+    dep.airport_name AS departure_airport_name,
+    dep.city AS departure_city,
+    f.arrival_airport,
+    arr.airport_name AS arrival_airport_name,
+    arr.city AS arrival_city,
+    f.status,
+    f.aircraft_code,
+    f.actual_departure,
+    timezone((dep.place ->> 'timezone'::text), f.actual_departure) AS actual_departure_local,
+    f.actual_arrival,
+    timezone((arr.place ->> 'timezone'::text), f.actual_arrival) AS actual_arrival_local,
+    (f.actual_arrival - f.actual_departure) AS actual_duration
+   FROM public.flights f,
+    public.airports dep,
+    public.airports arr
+  WHERE ((f.departure_airport = dep.airport_code) AND (f.arrival_airport = arr.airport_code));
+
+
+ALTER TABLE public.flights_v OWNER TO "user";
+
+--
+-- TOC entry 207 (class 1259 OID 16940)
+-- Name: routes; Type: MATERIALIZED VIEW; Schema: public; Owner: postgres
+--
+
+CREATE MATERIALIZED VIEW public.routes AS
+ WITH f3 AS (
+         SELECT f2.flight_no,
+            f2.departure_airport,
+            f2.arrival_airport,
+            f2.aircraft_code,
+            f2.duration,
+            array_agg(f2.days_of_week) AS days_of_week
+           FROM ( SELECT f1.flight_no,
+                    f1.departure_airport,
+                    f1.arrival_airport,
+                    f1.aircraft_code,
+                    f1.duration,
+                    f1.days_of_week
+                   FROM ( SELECT flights.flight_no,
+                            flights.departure_airport,
+                            flights.arrival_airport,
+                            flights.aircraft_code,
+                            (flights.scheduled_arrival - flights.scheduled_departure) AS duration,
+                            (to_char(flights.scheduled_departure, 'ID'::text))::integer AS days_of_week
+                           FROM public.flights) f1
+                  GROUP BY f1.flight_no, f1.departure_airport, f1.arrival_airport, f1.aircraft_code, f1.duration, f1.days_of_week
+                  ORDER BY f1.flight_no, f1.departure_airport, f1.arrival_airport, f1.aircraft_code, f1.duration, f1.days_of_week) f2
+          GROUP BY f2.flight_no, f2.departure_airport, f2.arrival_airport, f2.aircraft_code, f2.duration
+        )
+ SELECT f3.flight_no,
+    f3.departure_airport,
+    dep.airport_name AS departure_airport_name,
+    dep.city AS departure_city,
+    f3.arrival_airport,
+    arr.airport_name AS arrival_airport_name,
+    arr.city AS arrival_city,
+    f3.aircraft_code,
+    f3.duration,
+    f3.days_of_week
+   FROM f3,
+    public.airports dep,
+    public.airports arr
+  WHERE ((f3.departure_airport = dep.airport_code) AND (f3.arrival_airport = arr.airport_code))
+  WITH NO DATA;
+
+
+ALTER TABLE public.routes OWNER TO postgres;
+
+--
+-- TOC entry 208 (class 1259 OID 16948)
+-- Name: seats; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.seats (
+    aircraft_code character(3) NOT NULL,
+    seat_no character varying(4) NOT NULL,
+    fare_condition character varying(10) NOT NULL,
+    CONSTRAINT seats_fare_condition_check CHECK (((fare_condition)::text = ANY (ARRAY[('Economy'::character varying)::text, ('Comfort'::character varying)::text, ('Business'::character varying)::text])))
+);
+
+
+ALTER TABLE public.seats OWNER TO postgres;
+
+--
+-- TOC entry 209 (class 1259 OID 16952)
+-- Name: seats_tmp; Type: TABLE; Schema: public; Owner: user
+--
+
+CREATE TABLE public.seats_tmp (
+    aircraft_code character(3),
+    seat_no character varying(4),
+    fare_condition character varying(10)
+);
+
+
+ALTER TABLE public.seats_tmp OWNER TO "user";
+
+--
+-- TOC entry 210 (class 1259 OID 16955)
+-- Name: ticket_flight; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.ticket_flight (
+    ticket_no character(13) NOT NULL,
+    flight_id integer NOT NULL,
+    fare_conditions character varying(10) NOT NULL,
+    amount numeric(10,2) NOT NULL,
+    CONSTRAINT ticket_flight_amount_check CHECK ((amount >= (0)::numeric))
+);
+
+
+ALTER TABLE public.ticket_flight OWNER TO postgres;
+
+--
+-- TOC entry 211 (class 1259 OID 16959)
+-- Name: tickets; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.tickets (
+    ticket_no character(13) NOT NULL,
+    book_ref character(6) NOT NULL,
+    passenger_id character varying(20) NOT NULL,
+    passenger_name text NOT NULL,
+    contact_data jsonb
+);
+
+
+ALTER TABLE public.tickets OWNER TO postgres;
+
+--
+-- TOC entry 2848 (class 2604 OID 16965)
+-- Name: flights flight_id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.flights ALTER COLUMN flight_id SET DEFAULT nextval('public.flights_flight_id_seq'::regclass);
+
+
+--
+-- TOC entry 3017 (class 0 OID 16908)
+-- Dependencies: 200
+-- Data for Name: aircrafts; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO public.aircrafts (aircraft_code, model, range, specifications) VALUES ('222', 'Суперджет-100', 3000, '{"crew": 2, "engines": {"num": 2, "type": "IAE V2500"}}');
+INSERT INTO public.aircrafts (aircraft_code, model, range, specifications) VALUES ('111', 'Ту-154', 2800, '{"crew": 1, "engines": {"num": 3, "type": "AAA 352"}}');
+
+
+--
+-- TOC entry 3018 (class 0 OID 16915)
+-- Dependencies: 201
+-- Data for Name: airports; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO public.airports (airport_code, airport_name, city, place) VALUES ('AAQ', 'Anapa Airport', 'Anapa', '{"timezone": "Europe/Moscow", "coordinates": {"latitude": 1, "longitude": 5}}');
+INSERT INTO public.airports (airport_code, airport_name, city, place) VALUES ('ASF', 'Narimanovo Airport', 'Astrakhan', '{"timezone": "Europe/Astrakhan", "coordinates": {"latitude": 1, "longitude": 2}}');
+INSERT INTO public.airports (airport_code, airport_name, city, place) VALUES ('SVO', 'Sheremetyevo Alexander S. Pushkin International Airport', 'Moscow', '{"timezone": "Europe/Moscow", "coordinates": {"latitude": 1, "longitude": 5}}');
+INSERT INTO public.airports (airport_code, airport_name, city, place) VALUES ('VKO', 'Vnukovo Andrei Tupolev International Airport', 'Moscow', '{"timezone": "Europe/Moscow", "coordinates": {"latitude": 1, "longitude": 5}}');
+INSERT INTO public.airports (airport_code, airport_name, city, place) VALUES ('LED', 'Pulkovo Airport', 'St. Petersburg', '{"timezone": "Europe/Moscow", "coordinates": {"latitude": 1, "longitude": 6}}');
+INSERT INTO public.airports (airport_code, airport_name, city, place) VALUES ('AER', 'Sochi International Airport', 'Sochi', '{"timezone": "Europe/Moscow", "coordinates": {"latitude": 3, "longitude": 2}}');
+
+
+--
+-- TOC entry 3019 (class 0 OID 16921)
+-- Dependencies: 202
+-- Data for Name: bookings; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO public.bookings (book_ref, book_date, total_amount) VALUES ('111111', '2021-01-01 05:00:00+04', 10000.00);
+INSERT INTO public.bookings (book_ref, book_date, total_amount) VALUES ('111112', '2021-01-01 05:01:00+04', 100000.00);
+INSERT INTO public.bookings (book_ref, book_date, total_amount) VALUES ('111113', '2021-01-01 05:01:01+04', 12000.00);
+INSERT INTO public.bookings (book_ref, book_date, total_amount) VALUES ('111114', '2021-01-01 06:01:01+04', 120000.00);
+
+
+--
+-- TOC entry 3020 (class 0 OID 16924)
+-- Dependencies: 203
+-- Data for Name: boording_passes; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO public.boording_passes (ticket_no, flight_id, boarding_no, seat_no) VALUES ('1000000000000', 1, 1, '1');
+INSERT INTO public.boording_passes (ticket_no, flight_id, boarding_no, seat_no) VALUES ('2000000000000', 1, 2, '3');
+INSERT INTO public.boording_passes (ticket_no, flight_id, boarding_no, seat_no) VALUES ('3000000000000', 1, 3, '2');
+INSERT INTO public.boording_passes (ticket_no, flight_id, boarding_no, seat_no) VALUES ('4000000000000', 2, 1, '3');
+
+
+--
+-- TOC entry 3021 (class 0 OID 16927)
+-- Dependencies: 204
+-- Data for Name: flights; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO public.flights (flight_id, flight_no, scheduled_departure, departure_airport, arrival_airport, status, aircraft_code, actual_departure, actual_arrival, scheduled_arrival) VALUES (7, '111116', '2021-03-04 07:00:00+04', 'VKO', 'LED', 'Scheduled', '222', NULL, NULL, '2021-03-04 08:00:00+04');
+INSERT INTO public.flights (flight_id, flight_no, scheduled_departure, departure_airport, arrival_airport, status, aircraft_code, actual_departure, actual_arrival, scheduled_arrival) VALUES (8, '111116', '2021-03-05 05:00:00+04', 'VKO', 'LED', 'Scheduled', '222', NULL, NULL, '2021-03-05 06:00:00+04');
+INSERT INTO public.flights (flight_id, flight_no, scheduled_departure, departure_airport, arrival_airport, status, aircraft_code, actual_departure, actual_arrival, scheduled_arrival) VALUES (10, '111118', '2021-03-05 09:00:00+04', 'SVO', 'AER', 'Scheduled', '222', NULL, NULL, '2021-03-05 11:00:00+04');
+INSERT INTO public.flights (flight_id, flight_no, scheduled_departure, departure_airport, arrival_airport, status, aircraft_code, actual_departure, actual_arrival, scheduled_arrival) VALUES (6, '111116', '2021-03-03 05:00:00+04', 'VKO', 'LED', 'Scheduled', '222', NULL, NULL, '2021-03-03 06:00:00+04');
+INSERT INTO public.flights (flight_id, flight_no, scheduled_departure, departure_airport, arrival_airport, status, aircraft_code, actual_departure, actual_arrival, scheduled_arrival) VALUES (13, '111119', '2021-03-07 11:00:00+04', 'VKO', 'AER', 'Scheduled', '111', NULL, NULL, '2021-03-07 12:00:00+04');
+INSERT INTO public.flights (flight_id, flight_no, scheduled_departure, departure_airport, arrival_airport, status, aircraft_code, actual_departure, actual_arrival, scheduled_arrival) VALUES (15, '111119', '2021-03-09 11:00:00+04', 'VKO', 'AER', 'Scheduled', '111', NULL, NULL, '2021-03-09 12:00:00+04');
+INSERT INTO public.flights (flight_id, flight_no, scheduled_departure, departure_airport, arrival_airport, status, aircraft_code, actual_departure, actual_arrival, scheduled_arrival) VALUES (4, '111114', '2021-03-02 06:00:00+04', 'ASF', 'AAQ', 'Delayed', '222', '2021-03-02 06:00:00+04', '2021-03-02 08:00:00+04', '2021-03-02 07:00:00+04');
+INSERT INTO public.flights (flight_id, flight_no, scheduled_departure, departure_airport, arrival_airport, status, aircraft_code, actual_departure, actual_arrival, scheduled_arrival) VALUES (5, '111115', '2021-03-03 05:00:00+04', 'SVO', 'LED', 'Scheduled', '111', NULL, NULL, '2021-03-03 06:00:00+04');
+INSERT INTO public.flights (flight_id, flight_no, scheduled_departure, departure_airport, arrival_airport, status, aircraft_code, actual_departure, actual_arrival, scheduled_arrival) VALUES (2, '111112', '2021-03-02 05:00:00+04', 'AER', 'AAQ', 'Delayed', '111', '2021-03-02 05:00:00+04', '2021-03-02 07:00:00+04', '2021-03-02 06:00:00+04');
+INSERT INTO public.flights (flight_id, flight_no, scheduled_departure, departure_airport, arrival_airport, status, aircraft_code, actual_departure, actual_arrival, scheduled_arrival) VALUES (3, '111113', '2021-03-01 06:00:00+04', 'AER', 'ASF', 'Scheduled', '222', '2021-03-01 06:00:00+04', NULL, '2021-03-01 07:00:00+04');
+INSERT INTO public.flights (flight_id, flight_no, scheduled_departure, departure_airport, arrival_airport, status, aircraft_code, actual_departure, actual_arrival, scheduled_arrival) VALUES (16, '111119', '2021-03-10 11:00:00+04', 'VKO', 'AER', 'Scheduled', '111', NULL, NULL, '2021-03-10 12:00:00+04');
+INSERT INTO public.flights (flight_id, flight_no, scheduled_departure, departure_airport, arrival_airport, status, aircraft_code, actual_departure, actual_arrival, scheduled_arrival) VALUES (17, '111119', '2021-03-11 11:00:00+04', 'VKO', 'AER', 'Scheduled', '111', NULL, NULL, '2021-03-11 12:00:00+04');
+INSERT INTO public.flights (flight_id, flight_no, scheduled_departure, departure_airport, arrival_airport, status, aircraft_code, actual_departure, actual_arrival, scheduled_arrival) VALUES (18, '111116', '2021-03-06 11:00:00+04', 'VKO', 'LED', 'Scheduled', '222', NULL, NULL, '2021-03-06 12:00:00+04');
+INSERT INTO public.flights (flight_id, flight_no, scheduled_departure, departure_airport, arrival_airport, status, aircraft_code, actual_departure, actual_arrival, scheduled_arrival) VALUES (19, '111116', '2021-03-07 11:00:00+04', 'VKO', 'LED', 'Scheduled', '222', NULL, NULL, '2021-03-07 12:00:00+04');
+INSERT INTO public.flights (flight_id, flight_no, scheduled_departure, departure_airport, arrival_airport, status, aircraft_code, actual_departure, actual_arrival, scheduled_arrival) VALUES (20, '111116', '2021-03-08 11:00:00+04', 'VKO', 'LED', 'Scheduled', '222', NULL, NULL, '2021-03-08 12:00:00+04');
+INSERT INTO public.flights (flight_id, flight_no, scheduled_departure, departure_airport, arrival_airport, status, aircraft_code, actual_departure, actual_arrival, scheduled_arrival) VALUES (21, '111116', '2021-03-09 11:00:00+04', 'VKO', 'LED', 'Scheduled', '222', NULL, NULL, '2021-03-09 12:00:00+04');
+INSERT INTO public.flights (flight_id, flight_no, scheduled_departure, departure_airport, arrival_airport, status, aircraft_code, actual_departure, actual_arrival, scheduled_arrival) VALUES (22, '111117', '2021-03-06 06:00:00+04', 'SVO', 'ASF', 'Scheduled', '111', NULL, NULL, '2021-03-06 09:00:00+04');
+INSERT INTO public.flights (flight_id, flight_no, scheduled_departure, departure_airport, arrival_airport, status, aircraft_code, actual_departure, actual_arrival, scheduled_arrival) VALUES (23, '111117', '2021-03-07 06:00:00+04', 'SVO', 'ASF', 'Scheduled', '111', NULL, NULL, '2021-03-07 09:00:00+04');
+INSERT INTO public.flights (flight_id, flight_no, scheduled_departure, departure_airport, arrival_airport, status, aircraft_code, actual_departure, actual_arrival, scheduled_arrival) VALUES (24, '111117', '2021-03-08 06:00:00+04', 'SVO', 'ASF', 'Scheduled', '111', NULL, NULL, '2021-03-08 09:00:00+04');
+INSERT INTO public.flights (flight_id, flight_no, scheduled_departure, departure_airport, arrival_airport, status, aircraft_code, actual_departure, actual_arrival, scheduled_arrival) VALUES (25, '111117', '2021-03-09 06:00:00+04', 'SVO', 'ASF', 'Scheduled', '111', NULL, NULL, '2021-03-09 09:00:00+04');
+INSERT INTO public.flights (flight_id, flight_no, scheduled_departure, departure_airport, arrival_airport, status, aircraft_code, actual_departure, actual_arrival, scheduled_arrival) VALUES (26, '111117', '2021-03-10 06:00:00+04', 'SVO', 'ASF', 'Scheduled', '111', NULL, NULL, '2021-03-10 09:00:00+04');
+INSERT INTO public.flights (flight_id, flight_no, scheduled_departure, departure_airport, arrival_airport, status, aircraft_code, actual_departure, actual_arrival, scheduled_arrival) VALUES (27, '111117', '2021-03-11 06:00:00+04', 'SVO', 'ASF', 'Scheduled', '111', NULL, NULL, '2021-03-11 09:00:00+04');
+INSERT INTO public.flights (flight_id, flight_no, scheduled_departure, departure_airport, arrival_airport, status, aircraft_code, actual_departure, actual_arrival, scheduled_arrival) VALUES (28, '111115', '2021-03-04 05:00:00+04', 'SVO', 'LED', 'Scheduled', '111', NULL, NULL, '2021-03-04 06:00:00+04');
+INSERT INTO public.flights (flight_id, flight_no, scheduled_departure, departure_airport, arrival_airport, status, aircraft_code, actual_departure, actual_arrival, scheduled_arrival) VALUES (29, '111115', '2021-03-05 05:00:00+04', 'SVO', 'LED', 'Scheduled', '111', NULL, NULL, '2021-03-05 06:00:00+04');
+INSERT INTO public.flights (flight_id, flight_no, scheduled_departure, departure_airport, arrival_airport, status, aircraft_code, actual_departure, actual_arrival, scheduled_arrival) VALUES (30, '111115', '2021-03-06 05:00:00+04', 'SVO', 'LED', 'Scheduled', '111', NULL, NULL, '2021-03-06 06:00:00+04');
+INSERT INTO public.flights (flight_id, flight_no, scheduled_departure, departure_airport, arrival_airport, status, aircraft_code, actual_departure, actual_arrival, scheduled_arrival) VALUES (31, '111115', '2021-03-07 05:00:00+04', 'SVO', 'LED', 'Scheduled', '111', NULL, NULL, '2021-03-07 06:00:00+04');
+INSERT INTO public.flights (flight_id, flight_no, scheduled_departure, departure_airport, arrival_airport, status, aircraft_code, actual_departure, actual_arrival, scheduled_arrival) VALUES (32, '111115', '2021-03-08 05:00:00+04', 'SVO', 'LED', 'Scheduled', '111', NULL, NULL, '2021-03-08 06:00:00+04');
+INSERT INTO public.flights (flight_id, flight_no, scheduled_departure, departure_airport, arrival_airport, status, aircraft_code, actual_departure, actual_arrival, scheduled_arrival) VALUES (33, '111115', '2021-03-09 05:00:00+04', 'SVO', 'LED', 'Scheduled', '111', NULL, NULL, '2021-03-09 06:00:00+04');
+INSERT INTO public.flights (flight_id, flight_no, scheduled_departure, departure_airport, arrival_airport, status, aircraft_code, actual_departure, actual_arrival, scheduled_arrival) VALUES (1, '111111', '2021-05-21 05:00:00+04', 'ASF', 'AER', 'Scheduled', '222', NULL, NULL, '2021-05-21 06:00:00+04');
+INSERT INTO public.flights (flight_id, flight_no, scheduled_departure, departure_airport, arrival_airport, status, aircraft_code, actual_departure, actual_arrival, scheduled_arrival) VALUES (9, '111117', '2021-06-04 06:00:00+04', 'SVO', 'ASF', 'Scheduled', '111', NULL, NULL, '2021-06-04 09:00:00+04');
+INSERT INTO public.flights (flight_id, flight_no, scheduled_departure, departure_airport, arrival_airport, status, aircraft_code, actual_departure, actual_arrival, scheduled_arrival) VALUES (12, '111119', '2021-05-22 11:00:00+04', 'VKO', 'AER', 'Scheduled', '111', NULL, NULL, '2021-05-22 12:00:00+04');
+INSERT INTO public.flights (flight_id, flight_no, scheduled_departure, departure_airport, arrival_airport, status, aircraft_code, actual_departure, actual_arrival, scheduled_arrival) VALUES (11, '111119', '2021-05-30 11:00:00+04', 'VKO', 'AER', 'Scheduled', '111', NULL, NULL, '2021-05-30 12:00:00+04');
+INSERT INTO public.flights (flight_id, flight_no, scheduled_departure, departure_airport, arrival_airport, status, aircraft_code, actual_departure, actual_arrival, scheduled_arrival) VALUES (14, '111119', '2021-06-04 11:00:00+04', 'VKO', 'AER', 'Scheduled', '111', NULL, NULL, '2021-06-04 12:00:00+04');
+
+
+--
+-- TOC entry 3024 (class 0 OID 16948)
+-- Dependencies: 208
+-- Data for Name: seats; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO public.seats (aircraft_code, seat_no, fare_condition) VALUES ('111', '1', 'Economy');
+INSERT INTO public.seats (aircraft_code, seat_no, fare_condition) VALUES ('111', '2', 'Comfort');
+INSERT INTO public.seats (aircraft_code, seat_no, fare_condition) VALUES ('111', '3', 'Business');
+INSERT INTO public.seats (aircraft_code, seat_no, fare_condition) VALUES ('222', '1', 'Economy');
+INSERT INTO public.seats (aircraft_code, seat_no, fare_condition) VALUES ('222', '2', 'Comfort');
+INSERT INTO public.seats (aircraft_code, seat_no, fare_condition) VALUES ('222', '3', 'Business');
+
+
+--
+-- TOC entry 3025 (class 0 OID 16952)
+-- Dependencies: 209
+-- Data for Name: seats_tmp; Type: TABLE DATA; Schema: public; Owner: user
+--
+
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '1A', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '1B', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '1C', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '1D', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '1E', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '1F', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '1A', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '1B', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '1C', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '1D', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '1E', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '1F', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '1G', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '1H', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '1I', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '1A', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '1B', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '1C', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '1D', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '1E', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '1F', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '1G', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '1H', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '1A', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '1B', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '1C', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '1D', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '1E', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '1F', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '1A', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '1B', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '1C', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '1D', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '1E', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '1F', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '1A', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '1B', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '1C', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '1D', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '1E', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '1F', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '1A', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '1B', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '1C', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '1D', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '1E', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '1F', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '1A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '1B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '1A', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '1B', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '1C', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '1D', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '2A', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '2B', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '2C', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '2D', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '2E', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '2F', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '2A', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '2B', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '2C', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '2D', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '2E', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '2F', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '2G', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '2H', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '2I', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '2A', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '2B', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '2C', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '2D', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '2E', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '2F', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '2G', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '2H', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '2A', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '2B', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '2C', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '2D', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '2E', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '2F', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '2A', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '2B', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '2C', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '2D', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '2E', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '2F', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '2A', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '2B', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '2C', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '2D', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '2E', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '2F', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '2A', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '2B', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '2C', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '2D', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '2E', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '2F', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '2A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '2B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '2A', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '2B', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '2C', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '2D', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '3A', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '3B', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '3C', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '3D', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '3E', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '3F', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '3A', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '3B', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '3C', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '3D', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '3E', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '3F', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '3G', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '3H', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '3I', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '3A', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '3B', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '3C', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '3D', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '3E', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '3F', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '3G', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '3H', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '3A', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '3B', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '3C', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '3D', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '3E', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '3F', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '3A', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '3B', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '3C', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '3D', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '3E', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '3F', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '3A', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '3B', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '3C', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '3D', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '3E', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '3F', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '3A', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '3B', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '3C', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '3D', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '3E', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '3F', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '3A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '3B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '3A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '3B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '3C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '3D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '4A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '4B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '4C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '4D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '4E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '4F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '4A', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '4B', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '4C', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '4D', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '4E', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '4F', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '4G', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '4H', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '4I', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '4A', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '4B', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '4C', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '4D', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '4E', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '4F', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '4G', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '4H', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '4A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '4B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '4C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '4D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '4E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '4F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '4A', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '4B', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '4C', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '4D', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '4E', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '4F', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '4A', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '4B', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '4C', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '4D', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '4E', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '4F', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '4A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '4B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '4C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '4D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '4E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '4F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '4A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '4B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '4A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '4B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '4C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '4D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '5A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '5B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '5C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '5D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '5E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '5F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '5A', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '5B', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '5C', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '5D', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '5E', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '5F', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '5G', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '5H', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '5I', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '5A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '5B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '5C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '5D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '5E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '5F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '5G', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '5H', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '5A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '5B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '5C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '5D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '5E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '5F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '5A', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '5B', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '5C', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '5D', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '5E', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '5F', 'Business');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '5A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '5B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '5C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '5D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '5E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '5F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '5A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '5B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '5C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '5D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '5E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '5F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '5A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '5B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '5A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '5B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '5C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '5D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '6A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '6B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '6C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '6D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '6E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '6F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '6A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '6B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '6C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '6D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '6E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '6F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '6G', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '6H', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '6I', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '6A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '6B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '6C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '6D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '6E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '6F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '6G', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '6H', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '6A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '6B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '6C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '6D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '6E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '6F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '6A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '6B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '6C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '6D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '6E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '6F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '6A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '6B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '6C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '6D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '6E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '6F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '6A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '6B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '6C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '6D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '6E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '6F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '6A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '6B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '6A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '6B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '6C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '6D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '7A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '7B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '7C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '7D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '7E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '7F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '7A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '7B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '7C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '7D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '7E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '7F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '7G', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '7H', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '7I', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '7A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '7B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '7C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '7D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '7E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '7F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '7G', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '7H', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '7A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '7B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '7C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '7D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '7E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '7F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '7A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '7B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '7C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '7D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '7E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '7F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '7A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '7B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '7C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '7D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '7E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '7F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '7A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '7B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '7C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '7D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '7E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '7F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '7A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '7B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '7A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '7B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '7C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '7D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '8A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '8B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '8C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '8D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '8E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '8F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '8A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '8B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '8C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '8D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '8E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '8F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '8G', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '8H', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '8I', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '8A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '8B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '8C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '8D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '8E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '8F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '8G', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '8H', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '8A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '8B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '8C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '8D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '8E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '8F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '8A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '8B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '8C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '8D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '8E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '8F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '8A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '8B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '8C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '8D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '8E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '8F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '8A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '8B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '8C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '8D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '8E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '8F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '8A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '8B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '8A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '8B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '8C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '8D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '9A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '9B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '9C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '9D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '9E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '9F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '9A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '9B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '9C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '9D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '9E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '9F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '9G', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '9H', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '9I', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '9A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '9B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '9C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '9D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '9E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '9F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '9G', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '9H', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '9A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '9B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '9C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '9D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '9E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '9F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '9A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '9B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '9C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '9D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '9E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '9F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '9A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '9B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '9C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '9D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '9E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '9F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '9A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '9B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '9C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '9D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '9E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '9F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '9A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '9B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '9A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '9B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '9C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '9D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '10A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '10B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '10C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '10D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '10E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '10F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '10A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '10B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '10C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '10D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '10E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '10F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '10G', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '10H', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '10I', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '10A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '10B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '10C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '10D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '10E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '10F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '10G', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '10H', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '10A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '10B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '10C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '10D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '10E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '10F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '10A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '10B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '10C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '10D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '10E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '10F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '10A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '10B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '10C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '10D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '10E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '10F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '10A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '10B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '10C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '10D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '10E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '10F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '10A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '10B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '10A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '10B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '10C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '10D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '11A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '11B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '11C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '11D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '11E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '11F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '11A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '11B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '11C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '11D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '11E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '11F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '11G', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '11H', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '11I', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '11A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '11B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '11C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '11D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '11E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '11F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '11G', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '11H', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '11A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '11B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '11C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '11D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '11E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '11F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '11A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '11B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '11C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '11D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '11E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '11F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '11A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '11B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '11C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '11D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '11E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '11F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '11A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '11B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '11C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '11D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '11E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '11F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '11A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '11B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '11C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '11D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '12A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '12B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '12C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '12D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '12E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '12F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '12A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '12B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '12C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '12D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '12E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '12F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '12G', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '12H', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '12I', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '12A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '12B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '12C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '12D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '12E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '12F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '12G', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '12H', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '12A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '12B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '12C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '12D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '12E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '12F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '12A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '12B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '12C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '12D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '12E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '12F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '12A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '12B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '12C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '12D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '12E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '12F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '12A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '12B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '12C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '12D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '12E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '12F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '12A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '12B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '12C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '12D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '13A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '13B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '13C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '13D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '13E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '13F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '13A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '13B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '13C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '13D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '13E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '13F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '13G', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '13H', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '13I', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '13A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '13B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '13C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '13D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '13E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '13F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '13G', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '13H', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '13A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '13B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '13C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '13D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '13E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '13F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '13A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '13B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '13C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '13D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '13E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '13F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '13A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '13B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '13C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '13D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '13E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '13F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '13A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '13B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '13C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '13D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '13E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '13F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '13A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '13B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '13C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '13D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '14A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '14B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '14C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '14D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '14E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '14F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '14A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '14B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '14C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '14D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '14E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '14F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '14G', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '14H', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '14I', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '14A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '14B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '14C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '14D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '14E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '14F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '14G', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '14H', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '14A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '14B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '14C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '14D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '14E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '14F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '14A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '14B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '14C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '14D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '14E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '14F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '14A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '14B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '14C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '14D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '14E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '14F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '14A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '14B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '14C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '14D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '14E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '14F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '14A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '14B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '14C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '14D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '15A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '15B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '15C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '15D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '15E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '15F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '15A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '15B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '15C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '15D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '15E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '15F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '15G', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '15H', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '15I', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '15A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '15B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '15C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '15D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '15E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '15F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '15G', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '15H', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '15A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '15B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '15C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '15D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '15E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '15F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '15A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '15B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '15C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '15D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '15E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '15F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '15A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '15B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '15C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '15D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '15E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '15F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '15A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '15B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '15C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '15D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '15E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '15F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '15A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '15B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '15C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '15D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '16A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '16B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '16C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '16D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '16E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '16F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '16A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '16B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '16C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '16D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '16E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '16F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '16G', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '16H', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '16I', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '16A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '16B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '16C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '16D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '16E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '16F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '16G', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '16H', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '16A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '16B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '16C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '16D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '16E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '16F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '16A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '16B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '16C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '16D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '16E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '16F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '16A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '16B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '16C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '16D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '16E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '16F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '16A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '16B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '16C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '16D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '16E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '16F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '17A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '17B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '17C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '17D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '17E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '17F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '17A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '17B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '17C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '17D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '17E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '17F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '17G', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '17H', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '17I', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '17A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '17B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '17C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '17D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '17E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '17F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '17G', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '17H', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '17A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '17B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '17C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '17D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '17E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '17F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '17A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '17B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '17C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '17D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '17E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '17F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '17A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '17B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '17C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '17D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '17E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '17F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '17A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '17B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '17C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '17D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '17E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '17F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '18A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '18B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '18C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '18D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '18E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '18F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '18A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '18B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '18C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '18D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '18E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '18F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '18G', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '18H', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '18I', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '18A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '18B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '18C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '18D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '18E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '18F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '18G', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '18H', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '18A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '18B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '18C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '18D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '18E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '18F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '18A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '18B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '18C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '18D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '18E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '18F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '18A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '18B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '18C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '18D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '18E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '18F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '18A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '18B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '18C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '18D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '18E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '18F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '19A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '19B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '19C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '19D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '19E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '19F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '19A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '19B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '19C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '19D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '19E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '19F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '19G', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '19H', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '19I', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '19A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '19B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '19C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '19D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '19E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '19F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '19G', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '19H', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '19A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '19B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '19C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '19D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '19E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '19F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '19A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '19B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '19C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '19D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '19E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '19F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '19A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '19B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '19C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '19D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '19E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '19F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '19A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '19B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '19C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '19D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '19E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '19F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '20A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '20B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '20C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '20D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '20E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '20F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '20A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '20B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '20C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '20D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '20E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '20F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '20G', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '20H', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '20I', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '20A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '20B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '20C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '20D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '20E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '20F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '20G', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '20H', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '20A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '20B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '20C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '20D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '20E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '20F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '20A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '20B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '20C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '20D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '20E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '20F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '20A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '20B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '20C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '20D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '20E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '20F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '20A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '20B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '20C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '20D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '20E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('222', '20F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '21A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '21B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '21C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '21D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '21E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '21F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '21G', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '21H', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '21I', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '21A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '21B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '21C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '21D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '21E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '21F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '21G', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '21H', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '21A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '21B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '21C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '21D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '21E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '21F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '22A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '22B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '22C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '22D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '22E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '22F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '22G', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '22H', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '22I', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '22A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '22B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '22C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '22D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '22E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '22F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '22G', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '22H', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '22A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '22B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '22C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '22D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '22E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '22F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '23A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '23B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '23C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '23D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '23E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '23F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '23G', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '23H', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '23I', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '23A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '23B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '23C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '23D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '23E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '23F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '23G', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '23H', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '23A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '23B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '23C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '23D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '23E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '23F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '24A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '24B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '24C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '24D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '24E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '24F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '24G', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '24H', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '24I', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '24A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '24B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '24C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '24D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '24E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '24F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '24G', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '24H', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '24A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '24B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '24C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '24D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '24E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '24F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '25A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '25B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '25C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '25D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '25E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '25F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '25G', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '25H', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '25I', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '25A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '25B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '25C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '25D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '25E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '25F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '25G', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '25H', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '25A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '25B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '25C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '25D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '25E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '25F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '26A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '26B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '26C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '26D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '26E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '26F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '26G', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '26H', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '26I', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '27A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '27B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '27C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '27D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '27E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '27F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '27G', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '27H', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '27I', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '28A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '28B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '28C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '28D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '28E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '28F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '28G', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '28H', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '28I', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '29A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '29B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '29C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '29D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '29E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '29F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '29G', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '29H', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '29I', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '30A', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '30B', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '30C', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '30D', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '30E', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '30F', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '30G', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '30H', 'Economy');
+INSERT INTO public.seats_tmp (aircraft_code, seat_no, fare_condition) VALUES ('111', '30I', 'Economy');
+
+
+--
+-- TOC entry 3026 (class 0 OID 16955)
+-- Dependencies: 210
+-- Data for Name: ticket_flight; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO public.ticket_flight (ticket_no, flight_id, fare_conditions, amount) VALUES ('1000000000000', 1, 'Economy', 5000.00);
+INSERT INTO public.ticket_flight (ticket_no, flight_id, fare_conditions, amount) VALUES ('2000000000000', 1, 'Comfort', 5500.00);
+INSERT INTO public.ticket_flight (ticket_no, flight_id, fare_conditions, amount) VALUES ('3000000000000', 1, 'Business', 5550.00);
+INSERT INTO public.ticket_flight (ticket_no, flight_id, fare_conditions, amount) VALUES ('4000000000000', 2, 'Business', 5555.00);
+
+
+--
+-- TOC entry 3027 (class 0 OID 16959)
+-- Dependencies: 211
+-- Data for Name: tickets; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO public.tickets (ticket_no, book_ref, passenger_id, passenger_name, contact_data) VALUES ('4000000000000', '111114', 'daaaaaaaaaaaaaaaaaaa', 'AMIN AMINOV', '{"номер": "13-13-13", "почта": "qwe@mail.com"}');
+INSERT INTO public.tickets (ticket_no, book_ref, passenger_id, passenger_name, contact_data) VALUES ('1000000000000', '111111', 'aaaaaaaaaaaaaaaaaaaa', 'IVAN IVANOVICH IVANOV', '{"номер": "10-10-10", "почта": "abc@mail.com"}');
+INSERT INTO public.tickets (ticket_no, book_ref, passenger_id, passenger_name, contact_data) VALUES ('2000000000000', '111112', 'baaaaaaaaaaaaaaaaaaa', 'ANDRE ANDREEV', '{"номер": "11-11-11", "почта": "cba@mail.com"}');
+INSERT INTO public.tickets (ticket_no, book_ref, passenger_id, passenger_name, contact_data) VALUES ('3000000000000', '111113', 'caaaaaaaaaaaaaaaaaaa', 'NEIL NEILOV', '{"номер": "12-12-12", "почта": "aaa@mail.com"}');
+
+
+--
+-- TOC entry 3035 (class 0 OID 0)
+-- Dependencies: 205
+-- Name: flights_flight_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.flights_flight_id_seq', 1, false);
+
+
+--
+-- TOC entry 2856 (class 2606 OID 16967)
+-- Name: aircrafts aircrafts_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.aircrafts
+    ADD CONSTRAINT aircrafts_pkey PRIMARY KEY (aircraft_code);
+
+
+--
+-- TOC entry 2858 (class 2606 OID 16969)
+-- Name: airports airports_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.airports
+    ADD CONSTRAINT airports_pkey PRIMARY KEY (airport_code);
+
+
+--
+-- TOC entry 2860 (class 2606 OID 16971)
+-- Name: bookings bookings_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.bookings
+    ADD CONSTRAINT bookings_pkey PRIMARY KEY (book_ref);
+
+
+--
+-- TOC entry 2862 (class 2606 OID 16973)
+-- Name: boording_passes boording_passes_flight_id_boarding_no_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.boording_passes
+    ADD CONSTRAINT boording_passes_flight_id_boarding_no_key UNIQUE (flight_id, boarding_no);
+
+
+--
+-- TOC entry 2864 (class 2606 OID 16975)
+-- Name: boording_passes boording_passes_flight_id_seat_no_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.boording_passes
+    ADD CONSTRAINT boording_passes_flight_id_seat_no_key UNIQUE (flight_id, seat_no);
+
+
+--
+-- TOC entry 2866 (class 2606 OID 16977)
+-- Name: boording_passes boording_passes_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.boording_passes
+    ADD CONSTRAINT boording_passes_pkey PRIMARY KEY (ticket_no, flight_id);
+
+
+--
+-- TOC entry 2868 (class 2606 OID 16979)
+-- Name: flights flights_flight_no_scheduled_departure_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.flights
+    ADD CONSTRAINT flights_flight_no_scheduled_departure_key UNIQUE (flight_no, scheduled_departure);
+
+
+--
+-- TOC entry 2870 (class 2606 OID 16981)
+-- Name: flights flights_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.flights
+    ADD CONSTRAINT flights_pkey PRIMARY KEY (flight_id);
+
+
+--
+-- TOC entry 2872 (class 2606 OID 16983)
+-- Name: seats seats_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.seats
+    ADD CONSTRAINT seats_pkey PRIMARY KEY (aircraft_code, seat_no);
+
+
+--
+-- TOC entry 2854 (class 2606 OID 16984)
+-- Name: ticket_flight ticket_flight_fare_conditions_check; Type: CHECK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.ticket_flight
+    ADD CONSTRAINT ticket_flight_fare_conditions_check CHECK (((fare_conditions)::text = ANY (ARRAY[('Economy'::character varying)::text, ('Comfort'::character varying)::text, ('Business'::character varying)::text]))) NOT VALID;
+
+
+--
+-- TOC entry 2874 (class 2606 OID 16986)
+-- Name: ticket_flight ticket_flight_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.ticket_flight
+    ADD CONSTRAINT ticket_flight_pkey PRIMARY KEY (ticket_no, flight_id);
+
+
+--
+-- TOC entry 2876 (class 2606 OID 16988)
+-- Name: tickets tickets_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.tickets
+    ADD CONSTRAINT tickets_pkey PRIMARY KEY (ticket_no);
+
+
+--
+-- TOC entry 2877 (class 2606 OID 16989)
+-- Name: boording_passes boording_passes_ticket_no_flight_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.boording_passes
+    ADD CONSTRAINT boording_passes_ticket_no_flight_id_fkey FOREIGN KEY (ticket_no, flight_id) REFERENCES public.ticket_flight(ticket_no, flight_id);
+
+
+--
+-- TOC entry 2878 (class 2606 OID 16994)
+-- Name: flights flights_aircraft_code_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.flights
+    ADD CONSTRAINT flights_aircraft_code_fkey FOREIGN KEY (aircraft_code) REFERENCES public.aircrafts(aircraft_code);
+
+
+--
+-- TOC entry 2879 (class 2606 OID 16999)
+-- Name: flights flights_arrival_airport_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.flights
+    ADD CONSTRAINT flights_arrival_airport_fkey FOREIGN KEY (arrival_airport) REFERENCES public.airports(airport_code);
+
+
+--
+-- TOC entry 2880 (class 2606 OID 17004)
+-- Name: flights flights_departure_airport_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.flights
+    ADD CONSTRAINT flights_departure_airport_fkey FOREIGN KEY (departure_airport) REFERENCES public.airports(airport_code);
+
+
+--
+-- TOC entry 2881 (class 2606 OID 17009)
+-- Name: seats seats_aircraft_code_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.seats
+    ADD CONSTRAINT seats_aircraft_code_fkey FOREIGN KEY (aircraft_code) REFERENCES public.aircrafts(aircraft_code) ON DELETE CASCADE;
+
+
+--
+-- TOC entry 2882 (class 2606 OID 17014)
+-- Name: ticket_flight ticket_flight_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.ticket_flight
+    ADD CONSTRAINT ticket_flight_id_fkey FOREIGN KEY (flight_id) REFERENCES public.flights(flight_id);
+
+
+--
+-- TOC entry 2883 (class 2606 OID 17019)
+-- Name: ticket_flight ticket_flight_ticket_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.ticket_flight
+    ADD CONSTRAINT ticket_flight_ticket_fkey FOREIGN KEY (ticket_no) REFERENCES public.tickets(ticket_no);
+
+
+--
+-- TOC entry 2884 (class 2606 OID 17024)
+-- Name: tickets tickets_book_ref_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.tickets
+    ADD CONSTRAINT tickets_book_ref_fkey FOREIGN KEY (book_ref) REFERENCES public.bookings(book_ref);
+
+
+--
+-- TOC entry 3023 (class 0 OID 16940)
+-- Dependencies: 207 3029
+-- Name: routes; Type: MATERIALIZED VIEW DATA; Schema: public; Owner: postgres
+--
+
+REFRESH MATERIALIZED VIEW public.routes;
+
+
+-- Completed on 2021-07-01 23:55:24 +04
+
+--
+-- PostgreSQL database dump complete
+--
+
