@@ -1,0 +1,359 @@
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 13.3 (Debian 13.3-1.pgdg100+1)
+-- Dumped by pg_dump version 13.3 (Debian 13.3-1.pgdg100+1)
+
+-- Started on 2021-07-01 23:59:27 +04
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- TOC entry 2970 (class 1262 OID 17361)
+-- Name: lab_16_optovic; Type: DATABASE; Schema: -; Owner: postgres
+--
+
+CREATE DATABASE lab_16_optovic WITH TEMPLATE = template0 ENCODING = 'UTF8' LOCALE = 'ru_RU.UTF-8';
+
+
+ALTER DATABASE lab_16_optovic OWNER TO postgres;
+
+\connect lab_16_optovic
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- TOC entry 200 (class 1259 OID 17362)
+-- Name: Agent; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."Agent" (
+    "ID_Agent" integer NOT NULL,
+    "Name" character varying(40) NOT NULL,
+    "City" character varying(30) NOT NULL,
+    "Commission" real DEFAULT 0.0
+);
+
+
+ALTER TABLE public."Agent" OWNER TO postgres;
+
+--
+-- TOC entry 201 (class 1259 OID 17366)
+-- Name: Agent_ID_Agent_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public."Agent_ID_Agent_seq"
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public."Agent_ID_Agent_seq" OWNER TO postgres;
+
+--
+-- TOC entry 2971 (class 0 OID 0)
+-- Dependencies: 201
+-- Name: Agent_ID_Agent_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public."Agent_ID_Agent_seq" OWNED BY public."Agent"."ID_Agent";
+
+
+--
+-- TOC entry 202 (class 1259 OID 17368)
+-- Name: Customer; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."Customer" (
+    "ID_Customer" integer NOT NULL,
+    "Name" character varying(50) NOT NULL,
+    "City" character varying(30) NOT NULL,
+    "Rating" integer,
+    "ID_Agent" integer
+);
+
+
+ALTER TABLE public."Customer" OWNER TO postgres;
+
+--
+-- TOC entry 203 (class 1259 OID 17371)
+-- Name: Customer_ID_Customer_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public."Customer_ID_Customer_seq"
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public."Customer_ID_Customer_seq" OWNER TO postgres;
+
+--
+-- TOC entry 2972 (class 0 OID 0)
+-- Dependencies: 203
+-- Name: Customer_ID_Customer_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public."Customer_ID_Customer_seq" OWNED BY public."Customer"."ID_Customer";
+
+
+--
+-- TOC entry 204 (class 1259 OID 17373)
+-- Name: Order; Type: TABLE; Schema: public; Owner: agents
+--
+
+CREATE TABLE public."Order" (
+    "ID_Order" integer NOT NULL,
+    "Sum" real NOT NULL,
+    "Date" date DEFAULT CURRENT_DATE,
+    "ID_Customer" integer,
+    "ID_Agent" integer
+);
+
+
+ALTER TABLE public."Order" OWNER TO agents;
+
+--
+-- TOC entry 205 (class 1259 OID 17377)
+-- Name: Order_ID_Order_seq; Type: SEQUENCE; Schema: public; Owner: agents
+--
+
+CREATE SEQUENCE public."Order_ID_Order_seq"
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public."Order_ID_Order_seq" OWNER TO agents;
+
+--
+-- TOC entry 2973 (class 0 OID 0)
+-- Dependencies: 205
+-- Name: Order_ID_Order_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: agents
+--
+
+ALTER SEQUENCE public."Order_ID_Order_seq" OWNED BY public."Order"."ID_Order";
+
+
+--
+-- TOC entry 2816 (class 2604 OID 17379)
+-- Name: Agent ID_Agent; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."Agent" ALTER COLUMN "ID_Agent" SET DEFAULT nextval('public."Agent_ID_Agent_seq"'::regclass);
+
+
+--
+-- TOC entry 2817 (class 2604 OID 17380)
+-- Name: Customer ID_Customer; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."Customer" ALTER COLUMN "ID_Customer" SET DEFAULT nextval('public."Customer_ID_Customer_seq"'::regclass);
+
+
+--
+-- TOC entry 2819 (class 2604 OID 17381)
+-- Name: Order ID_Order; Type: DEFAULT; Schema: public; Owner: agents
+--
+
+ALTER TABLE ONLY public."Order" ALTER COLUMN "ID_Order" SET DEFAULT nextval('public."Order_ID_Order_seq"'::regclass);
+
+
+--
+-- TOC entry 2959 (class 0 OID 17362)
+-- Dependencies: 200
+-- Data for Name: Agent; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO public."Agent" ("ID_Agent", "Name", "City", "Commission") VALUES (1, 'Иванов И.И.', 'Астрахань', 10000);
+INSERT INTO public."Agent" ("ID_Agent", "Name", "City", "Commission") VALUES (2, 'Петров П.П.', 'Астрахань', 22000);
+INSERT INTO public."Agent" ("ID_Agent", "Name", "City", "Commission") VALUES (3, 'Сидоров С.С.', 'Волгоград', 15000);
+INSERT INTO public."Agent" ("ID_Agent", "Name", "City", "Commission") VALUES (4, 'Горяев Р.А.', 'Элиста', 8000);
+INSERT INTO public."Agent" ("ID_Agent", "Name", "City", "Commission") VALUES (5, 'Родионов Н.О.', 'Ростов-на-Дону', 30000);
+INSERT INTO public."Agent" ("ID_Agent", "Name", "City", "Commission") VALUES (6, 'Медведев Л.Д.', 'Ростов-на-Дону', 18000);
+INSERT INTO public."Agent" ("ID_Agent", "Name", "City", "Commission") VALUES (7, 'Арефьев В.А.', 'Ставрополь', 25000);
+INSERT INTO public."Agent" ("ID_Agent", "Name", "City", "Commission") VALUES (8, 'Краснов С.В.', 'Краснодар', 32000);
+INSERT INTO public."Agent" ("ID_Agent", "Name", "City", "Commission") VALUES (9, 'Мурзалиев М.М.', 'Махачкала', 12000);
+INSERT INTO public."Agent" ("ID_Agent", "Name", "City", "Commission") VALUES (10, 'Дудкин В.И.', 'Владикавказ', 20000);
+
+
+--
+-- TOC entry 2961 (class 0 OID 17368)
+-- Dependencies: 202
+-- Data for Name: Customer; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO public."Customer" ("ID_Customer", "Name", "City", "Rating", "ID_Agent") VALUES (1, 'Три кота', 'Астрахань', 65, 1);
+INSERT INTO public."Customer" ("ID_Customer", "Name", "City", "Rating", "ID_Agent") VALUES (2, 'ЭЛКО', 'Астрахань', 40, 2);
+INSERT INTO public."Customer" ("ID_Customer", "Name", "City", "Rating", "ID_Agent") VALUES (3, 'ТЦ Восток', 'Астрахань', 25, 1);
+INSERT INTO public."Customer" ("ID_Customer", "Name", "City", "Rating", "ID_Agent") VALUES (4, 'ЦУМ', 'Астрахань', 40, 2);
+INSERT INTO public."Customer" ("ID_Customer", "Name", "City", "Rating", "ID_Agent") VALUES (5, 'Астрахань-Гарант-Сервис', 'Астрахань', 80, 1);
+INSERT INTO public."Customer" ("ID_Customer", "Name", "City", "Rating", "ID_Agent") VALUES (6, 'Музей В.О.В.', 'Волгоград', 55, 3);
+INSERT INTO public."Customer" ("ID_Customer", "Name", "City", "Rating", "ID_Agent") VALUES (7, 'Речной порт', 'Волгоград', 20, 3);
+INSERT INTO public."Customer" ("ID_Customer", "Name", "City", "Rating", "ID_Agent") VALUES (8, 'Мясокомбинат', 'Ставрополь', 60, 7);
+INSERT INTO public."Customer" ("ID_Customer", "Name", "City", "Rating", "ID_Agent") VALUES (9, 'Молокозавод', 'Ставрополь', 65, 7);
+INSERT INTO public."Customer" ("ID_Customer", "Name", "City", "Rating", "ID_Agent") VALUES (10, 'Турфирма ОТДЫХ', 'Краснодар', 40, 8);
+INSERT INTO public."Customer" ("ID_Customer", "Name", "City", "Rating", "ID_Agent") VALUES (11, 'Гостиничный комплекс МОСКВА', 'Краснодар', 70, 5);
+INSERT INTO public."Customer" ("ID_Customer", "Name", "City", "Rating", "ID_Agent") VALUES (12, 'Кондитерская фабрика', 'Краснодар', 65, 8);
+INSERT INTO public."Customer" ("ID_Customer", "Name", "City", "Rating", "ID_Agent") VALUES (13, 'Издательство КАВКАЗ', 'Краснодар', 80, 8);
+INSERT INTO public."Customer" ("ID_Customer", "Name", "City", "Rating", "ID_Agent") VALUES (14, 'Трикотажная фабрика', 'Элиста', 75, 4);
+INSERT INTO public."Customer" ("ID_Customer", "Name", "City", "Rating", "ID_Agent") VALUES (15, 'ООО Бензин Калмыкии', 'Элиста', 20, 4);
+INSERT INTO public."Customer" ("ID_Customer", "Name", "City", "Rating", "ID_Agent") VALUES (16, 'Консервный завод', 'Махачкала', 50, 9);
+INSERT INTO public."Customer" ("ID_Customer", "Name", "City", "Rating", "ID_Agent") VALUES (17, 'ООО Северная Осетия', 'Владикавказ', 35, 10);
+INSERT INTO public."Customer" ("ID_Customer", "Name", "City", "Rating", "ID_Agent") VALUES (18, 'ООО ПРЕДГОРЬЕ', 'Грозный', 60, 10);
+INSERT INTO public."Customer" ("ID_Customer", "Name", "City", "Rating", "ID_Agent") VALUES (19, 'Аэропорт РОСТОВ', 'Ростов-на-Дону', 75, 6);
+INSERT INTO public."Customer" ("ID_Customer", "Name", "City", "Rating", "ID_Agent") VALUES (20, 'Конный завод им. С.М.Буденного', 'Ростов-на-Дону', 80, 5);
+INSERT INTO public."Customer" ("ID_Customer", "Name", "City", "Rating", "ID_Agent") VALUES (21, 'Часовой завод ЛУЧ', 'Ростов-на-Дону', 40, 6);
+INSERT INTO public."Customer" ("ID_Customer", "Name", "City", "Rating", "ID_Agent") VALUES (22, 'Морской порт', 'Таганрог', 60, 6);
+
+
+--
+-- TOC entry 2963 (class 0 OID 17373)
+-- Dependencies: 204
+-- Data for Name: Order; Type: TABLE DATA; Schema: public; Owner: agents
+--
+
+INSERT INTO public."Order" ("ID_Order", "Sum", "Date", "ID_Customer", "ID_Agent") VALUES (2, 100000, '2014-09-01', 3, 1);
+INSERT INTO public."Order" ("ID_Order", "Sum", "Date", "ID_Customer", "ID_Agent") VALUES (3, 75000, '2014-09-05', 7, 3);
+INSERT INTO public."Order" ("ID_Order", "Sum", "Date", "ID_Customer", "ID_Agent") VALUES (4, 120000, '2014-09-08', 2, 2);
+INSERT INTO public."Order" ("ID_Order", "Sum", "Date", "ID_Customer", "ID_Agent") VALUES (5, 50000, '2014-09-11', 4, 2);
+INSERT INTO public."Order" ("ID_Order", "Sum", "Date", "ID_Customer", "ID_Agent") VALUES (6, 230000, '2014-09-15', 1, 1);
+INSERT INTO public."Order" ("ID_Order", "Sum", "Date", "ID_Customer", "ID_Agent") VALUES (7, 150000, '2014-09-18', 5, 1);
+INSERT INTO public."Order" ("ID_Order", "Sum", "Date", "ID_Customer", "ID_Agent") VALUES (8, 300000, '2014-09-20', 8, 7);
+INSERT INTO public."Order" ("ID_Order", "Sum", "Date", "ID_Customer", "ID_Agent") VALUES (9, 170000, '2014-09-20', 6, 3);
+INSERT INTO public."Order" ("ID_Order", "Sum", "Date", "ID_Customer", "ID_Agent") VALUES (10, 340000, '2014-09-23', 9, 7);
+INSERT INTO public."Order" ("ID_Order", "Sum", "Date", "ID_Customer", "ID_Agent") VALUES (11, 500000, '2014-09-25', 11, 5);
+INSERT INTO public."Order" ("ID_Order", "Sum", "Date", "ID_Customer", "ID_Agent") VALUES (12, 450000, '2014-09-29', 10, 8);
+INSERT INTO public."Order" ("ID_Order", "Sum", "Date", "ID_Customer", "ID_Agent") VALUES (13, 350000, '2014-09-30', 13, 8);
+INSERT INTO public."Order" ("ID_Order", "Sum", "Date", "ID_Customer", "ID_Agent") VALUES (14, 180000, '2014-10-02', 12, 8);
+INSERT INTO public."Order" ("ID_Order", "Sum", "Date", "ID_Customer", "ID_Agent") VALUES (15, 370000, '2014-10-04', 15, 4);
+INSERT INTO public."Order" ("ID_Order", "Sum", "Date", "ID_Customer", "ID_Agent") VALUES (16, 90000, '2014-10-06', 17, 10);
+INSERT INTO public."Order" ("ID_Order", "Sum", "Date", "ID_Customer", "ID_Agent") VALUES (17, 460000, '2014-10-09', 14, 4);
+INSERT INTO public."Order" ("ID_Order", "Sum", "Date", "ID_Customer", "ID_Agent") VALUES (18, 290000, '2014-10-10', 18, 10);
+INSERT INTO public."Order" ("ID_Order", "Sum", "Date", "ID_Customer", "ID_Agent") VALUES (19, 420000, '2014-10-10', 16, 9);
+INSERT INTO public."Order" ("ID_Order", "Sum", "Date", "ID_Customer", "ID_Agent") VALUES (20, 310000, '2014-10-16', 20, 5);
+INSERT INTO public."Order" ("ID_Order", "Sum", "Date", "ID_Customer", "ID_Agent") VALUES (21, 130000, '2014-10-21', 19, 6);
+INSERT INTO public."Order" ("ID_Order", "Sum", "Date", "ID_Customer", "ID_Agent") VALUES (22, 490000, '2014-10-26', 22, 6);
+INSERT INTO public."Order" ("ID_Order", "Sum", "Date", "ID_Customer", "ID_Agent") VALUES (23, 200000, '2014-10-31', 21, 6);
+INSERT INTO public."Order" ("ID_Order", "Sum", "Date", "ID_Customer", "ID_Agent") VALUES (24, 400000, '2014-10-31', 21, 6);
+
+
+--
+-- TOC entry 2974 (class 0 OID 0)
+-- Dependencies: 201
+-- Name: Agent_ID_Agent_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public."Agent_ID_Agent_seq"', 10, true);
+
+
+--
+-- TOC entry 2975 (class 0 OID 0)
+-- Dependencies: 203
+-- Name: Customer_ID_Customer_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public."Customer_ID_Customer_seq"', 22, true);
+
+
+--
+-- TOC entry 2976 (class 0 OID 0)
+-- Dependencies: 205
+-- Name: Order_ID_Order_seq; Type: SEQUENCE SET; Schema: public; Owner: agents
+--
+
+SELECT pg_catalog.setval('public."Order_ID_Order_seq"', 24, true);
+
+
+--
+-- TOC entry 2821 (class 2606 OID 17383)
+-- Name: Agent Agent_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."Agent"
+    ADD CONSTRAINT "Agent_pkey" PRIMARY KEY ("ID_Agent");
+
+
+--
+-- TOC entry 2823 (class 2606 OID 17385)
+-- Name: Customer Customer_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."Customer"
+    ADD CONSTRAINT "Customer_pkey" PRIMARY KEY ("ID_Customer");
+
+
+--
+-- TOC entry 2825 (class 2606 OID 17387)
+-- Name: Order Order_pkey; Type: CONSTRAINT; Schema: public; Owner: agents
+--
+
+ALTER TABLE ONLY public."Order"
+    ADD CONSTRAINT "Order_pkey" PRIMARY KEY ("ID_Order");
+
+
+--
+-- TOC entry 2826 (class 2606 OID 17388)
+-- Name: Customer Customer_ID_Agent_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."Customer"
+    ADD CONSTRAINT "Customer_ID_Agent_fkey" FOREIGN KEY ("ID_Agent") REFERENCES public."Agent"("ID_Agent");
+
+
+--
+-- TOC entry 2827 (class 2606 OID 17393)
+-- Name: Order Order_ID_Agent_fkey; Type: FK CONSTRAINT; Schema: public; Owner: agents
+--
+
+ALTER TABLE ONLY public."Order"
+    ADD CONSTRAINT "Order_ID_Agent_fkey" FOREIGN KEY ("ID_Agent") REFERENCES public."Agent"("ID_Agent");
+
+
+--
+-- TOC entry 2828 (class 2606 OID 17398)
+-- Name: Order Order_ID_Customer_fkey; Type: FK CONSTRAINT; Schema: public; Owner: agents
+--
+
+ALTER TABLE ONLY public."Order"
+    ADD CONSTRAINT "Order_ID_Customer_fkey" FOREIGN KEY ("ID_Customer") REFERENCES public."Customer"("ID_Customer");
+
+
+-- Completed on 2021-07-01 23:59:27 +04
+
+--
+-- PostgreSQL database dump complete
+--
+

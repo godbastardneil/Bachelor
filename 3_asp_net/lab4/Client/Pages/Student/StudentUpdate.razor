@@ -1,0 +1,64 @@
+﻿@page "/Groud/{idgroup}/Update/{idstudent}"
+@attribute [Authorize]
+
+@using Lab4.Client.Services
+@using Lab4.Shared.Domain
+@using Microsoft.AspNetCore.Authorization
+
+@inject NavigationManager Navigation
+@inject GroupService GroupService
+@inject StudentService StudentService
+
+<div class="text-center">
+    <h1 class="display-4">Редактирование студента в списке - @GroupName</h1>
+    <EditForm Model="stud">
+        <p>
+            <label for="FIO"><b>Фамилия Имя Отчество: </b></label>
+            <InputText name="FIO" id="FIO" class="w-100" @bind-Value="@stud.FIO" required />
+        </p>
+        <p>
+            <label for="headman_sign"><b>Староста? </b></label>
+            <InputCheckbox name="headman_sign" id="headman_sign" @bind-Value="@stud.headman_sign" />
+        </p>
+        <input type="submit" class="btn btn-success" value="Изменить" @onclick="() => Update(stud)">
+        <a class="btn btn-danger" href="/Group/@idgroup">Назад</a>
+    </EditForm>
+</div>
+
+@code {
+    [Parameter]
+    public string idgroup { get; set; }
+    [Parameter]
+    public string idstudent { get; set; }
+    private string GroupName { get; set; }
+    private StudentModel stud { get; set; }
+        = new StudentModel();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            stud = await StudentService.GetById(idstudent);
+            GroupName = await GroupService.GetNameOfGroup(idgroup);
+        }
+        catch (HttpRequestException)
+        {
+            BackToStudents();
+        }
+    }
+
+    private async Task Update(StudentModel upd_stud)
+    {
+        if (!String.IsNullOrWhiteSpace(upd_stud.FIO))
+        {
+            await StudentService.UpdateStudent(upd_stud);
+            BackToStudents();
+        }
+    }
+
+    private void BackToStudents()
+    {
+        Navigation.NavigateTo($"/Group/{idgroup}");
+        return;
+    }
+}

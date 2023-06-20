@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/admin.js"></script>
+    <link href="/css/stile.css" rel="stylesheet">
+
+    <title>АДМИНИСТРАТОР</title>
+</head>
+
+<body>
+    <header class="header">
+        <section>
+            <h1 class="header_text" id="header_to_main"> АДМИНИСТРАТОР </h1>
+        </section>
+        <section class="buttons">
+            <form>
+                <button type="button" class="button" id="out_to_init"> Выйти </button>
+            </form>
+        </section>
+    </header>
+
+    <section class="main_content">
+        <section class="main_content_for_pages" id="main">
+            <div class="list_of_discipline" id="discipline">
+                <h3>Дисциплины</h3>
+                <table id="table_of_discipline" border="1">
+                    <thead>
+                        <tr>
+                            <th>Номер</th>
+                            <th>Название дисциплин</th>
+                            <th>Институт</th>
+                            <th>Кафедра</th>
+                            <th>Действие</th>
+                        </tr>
+                    </thead>
+                    <tbody class="tbody-mp"></tbody>
+                </table>
+                <form>
+                    <div id="add_discipline_button" class="button" style="margin-bottom: 1%; justify-content: space-around;">
+                        <button type="button" class="button" id="add_discipline"> Добавить </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+        <section>
+            <div class="list_of_teacher" id="teacher">
+                <h3>Преподаватели</h3>
+                <table id="table_of_teacher" border="1">
+                    <thead>
+                        <tr>
+                            <th>Номер</th>
+                            <th>ФИО</th>
+                            <th>Пароль</th>
+                            <th>Институт</th>
+                            <th>Кафедра</th>
+                            <th>Действие</th>
+                        </tr>
+                    </thead>
+                    <tbody class="tbody-mp"></tbody>
+                </table>
+                <form>
+                    <div id="add_teacher_button" class="button" style="margin-bottom: 1%; justify-content: space-around;">
+                        <button type="button" class="button" id="add_teacher"> Добавить </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+        <section>
+            <div class="list_of_group" id="group">
+                <h3>Группы</h3>
+                <table id="table_of_group" border="1">
+                    <thead>
+                        <tr>
+                            <th>Номер</th>
+                            <th>Название</th>
+                            <th>Количество людей</th>
+                            <th>Институт</th>
+                            <th>Кафедра</th>
+                            <th>Действие</th>
+                        </tr>
+                    </thead>
+                    <tbody class="tbody-mp"></tbody>
+                </table>
+                <form>
+                    <div id="add_group_button" class="button" style="margin-bottom: 1%; justify-content: space-around;">
+                        <button type="button" class="button" id="add_group"> Добавить </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+        <section>
+            <div class="list_of_student" id="student">
+                <h3>Студент</h3>
+                <table id="table_of_student" border="1">
+                    <thead>
+                        <tr>
+                            <th>Номер</th>
+                            <th>ФИО</th>
+                            <th>Пароль</th>
+                            <th>Номер Группы</th>
+                            <th>Действие</th>
+                        </tr>
+                    </thead>
+                    <tbody class="tbody-mp"></tbody>
+                </table>
+                <form>
+                    <div id="add_student_button" class="button" style="margin-bottom: 1%; justify-content: space-around;">
+                        <button type="button" class="button" id="add_student"> Добавить </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+        <section>
+            <div class="list_of_plan" id="plan">
+                <h3>Учебный план</h3>
+                <table id="table_of_plan" border="1">
+                    <thead>
+                        <tr>
+                            <th>Номер</th>
+                            <th>Номер Дисциплины</th>
+                            <th>Номер Преподавателя</th>
+                            <th>Номер Группы</th>
+                            <th>Дата экзамена</th>
+                            <th>Действие</th>
+                        </tr>
+                    </thead>
+                    <tbody class="tbody-mp"></tbody>
+                </table>
+                <form>
+                    <div id="add_plan_button" class="button" style="margin-bottom: 1%; justify-content: space-around;">
+                        <button type="button" class="button" id="add_plan"> Добавить </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+    </section>
+</body>
+
+</html>

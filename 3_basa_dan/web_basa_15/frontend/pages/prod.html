@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ru">
+    <head>
+        <meta charset="UTF-8">
+        <script src="/socket.io/socket.io.js"></script>
+        <script src="/js/prod.js"></script>
+
+        <title>Лаба_12</title>
+    </head>
+
+    <body>
+        <div class="header">
+            <p class="header_text" id="header_to_main"> Лаба_12</p>
+        </div>
+
+        <div class = "s_searсh">
+
+            <form>
+                <div id="teoty_out_buttons" class="button" style="margin-bottom: 1%; justify-content: space-around;">
+                    <button type="button" class="button" id="b_client">Клиенты</button>
+                </div>
+                <div id="teoty_out_buttons" class="button" style="margin-bottom: 1%; justify-content: space-around;">
+                    <button type="button" class="button" id="b_deal">Сдекли</button>
+                </div>
+                <p id="kol_t">Поиск: </p>
+                    <input type="text" id="searсh_in" value=""><Br>
+
+                    <input type="radio" name="searсh_rad" value="title_r">Название<Br>
+                    <input type="radio" name="searсh_rad" value="opt_r">Оптовая цена<Br>
+                    <input type="radio" name="searсh_rad" value="roz_r">Розничная цена<Br>
+
+                <div id="teoty_out_buttons" class="button" style="margin-bottom: 1%; justify-content: space-around;">
+                    <button type="button" class="button" id="b_searсh">Поиск</button>
+                </div>
+            </form>
+
+            <div id="searсh_dprod_info">
+                <table id="table_of_searсh" border="1">
+                    <thead>
+                        <tr>
+                            <th>Название</th>
+                            <th>Оптовая цена</th>
+                            <th>Розничная цена</th>
+                        <tr>
+                    </thead>
+                    <tbody class="tbody-mp"></tbody>
+                </table>
+            </div>
+
+        </div>
+
+        <div class = "main">
+
+            <form>
+                <p id="title_t">Название: </p>
+                    <input type="text" id="title_in" value=""><Br>
+
+                <p id="opt_t">Оптовая цена: </p>
+                    <input type="number" id="opt_in" value=""><Br>
+
+                <p id="roz_t">Розничная цена: </p>
+                    <input type="number" id="roz_in" value=""><Br>
+
+                <div id="teoty_out_buttons" class="button" style="margin-bottom: 1%; justify-content: space-around;">
+                    <button type="button" class="button" id="b_include">Добавить</button>
+                </div>
+            </form>
+
+            <div id="main_product_info">
+                <table id="table_of_product" border="1">
+                    <thead>
+                        <tr>
+                            <th>Название</th>
+                            <th>Оптовая цена</th>
+                            <th>Розничная цена</th>
+                        <tr>
+                    </thead>
+                    <tbody class="tbody-mp"></tbody>
+                </table>
+            </div>
+
+        </div>
+    </body>
+</html>

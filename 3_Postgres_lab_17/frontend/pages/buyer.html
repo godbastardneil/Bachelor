@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="/css/stile.css" rel="stylesheet">
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/buyer.js"></script>
+
+    <title> ЛАБА_17 </title>
+</head>
+
+<body>
+    <header class="header">
+        <section>
+            <h1 class="header_text" id="header_to_main"> ПОКУПАТЕЛИ </h1>
+        </section>
+        <section class="buttons">
+            <form>
+                <button type="button" class="button" id="open_deals"> СДЕЛКИ </button>
+                <button type="button" class="button" id="open_products"> ТОВАРЫ </button>
+            </form>
+        </section>
+    </header>
+
+    <section class="main_content">
+        <section>
+            <div class="search">
+                <h3 class="header_text" id="header_to_search"> ПОИСК </h3>
+                <form>
+                    <input id="search_id" placeholder="Номер" type="number">
+
+                    <input id="search_tel" placeholder="Телефон" type="text">
+
+                    <input id="search_kont_lizo" placeholder="Контактное лицо" type="text">
+
+                    <input id="search_address" placeholder="Адрес" type="text">
+
+                    <input id="search_opisanie" placeholder="Описание" type="text">
+
+
+                    <button type="button" class="button" id="search_button"z> Поиск </button>
+                </form>
+            </div>
+        </section>
+        <section>
+            <div class="info_buyer">
+                <h3 class="header_text" id="header_table_of_buyer_info"> СПИСОК </h3>
+                <table id="table_of_buyer_info" border="1">
+                    <thead>
+                        <tr>
+                            <th>№</th>
+                            <th>Телефон</th>
+                            <th>Контактное лицо</th>
+                            <th>Адрес</th>
+                            <th>Описание</th>
+                            <th>Действие</th>
+                        </tr>
+                    </thead>
+                    <tbody class="tbody-mp"></tbody>
+                </table>
+                <button type="button" class="button" id="init_button"> ДОБАВИТЬ </button>
+            </div>
+        </section>
+    </section>
+</body>
+
+</html>

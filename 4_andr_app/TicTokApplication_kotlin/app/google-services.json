@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "185327818029",
+    "firebase_url": "https://usersstat-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "usersstat",
+    "storage_bucket": "usersstat.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:185327818029:android:3ab662ade4c24e2d63efa4",
+        "android_client_info": {
+          "package_name": "com.example.tictokapplication_kotlin"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "185327818029-0g8crnnu7bhjk0d5vss5cjicd4aj2rpj.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAG--EORVa9PEsrJckNtI0pl6M4fu6THTE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "185327818029-0g8crnnu7bhjk0d5vss5cjicd4aj2rpj.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

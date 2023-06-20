@@ -1,0 +1,44 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Data list";
+    List<Stud_Info> L_students = (List<Stud_Info>)ViewData["data"];
+}
+@using Data
+
+<div class="text-center">
+    <table class="list_of_stud_block" width="100%" border="1">
+        <caption>Список студентов</caption>
+        <tr>
+            <th>Номер зачётки</th>
+            <th>ФИО</th>
+            <th>Признак старосты</th>
+            <th>Действие</th>
+        </tr>
+
+        @if (L_students != null)
+        {
+            Console.WriteLine("print_list");
+            @foreach (Stud_Info stud in L_students)
+            {
+                <tr>
+                    <td>@stud.Id</td>
+                    <td>@stud.FIO</td>
+                    <td>@stud.IsStar</td>
+                    <td>
+                        <form method="post">
+                            <a asp-area="" asp-page="/Change" asp-route-id="@stud.Id">Изменить</a>
+                            /
+                            <button type="submit" asp-page-handler="delete" asp-route-id="@stud.Id">
+                                Удалить
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        } else { Console.WriteLine("no print_list"); }
+        <!--<tr>
+        <td></td>
+    </tr>-->
+    </table>
+</div>

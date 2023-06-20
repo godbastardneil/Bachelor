@@ -1,0 +1,372 @@
+@import url('fonts.css');
+
+/* подгрузка шрифтов и размер шрифта для разрешений меньше 1600px (по ширине)*/
+body {
+    font-family: 'Roboto', sans-serif;
+    font-size: 16px;
+}
+
+/* масштабирование шрифта и размеров контейнера при ширине экрана больше 1600px */
+@media only screen and (min-width : 1600px) {
+    .container {
+        max-width: 1500px;
+    }
+
+    body {
+        font-size: 21px;
+    }
+}
+
+.margin-select {
+    width: 37.8%;
+}
+
+dl {
+    word-wrap: break-word;
+}
+
+dt {
+    font-weight: normal;
+}
+
+dd {
+    font-weight: bold;
+}
+
+.app-back-panel {
+    background: #E6F1FA;
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    box-sizing: border-box;
+    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+    border-radius: 5px;
+    padding-left: 25px;
+    padding-right: 25px;
+}
+
+.no-link {
+    pointer-events: none;
+}
+
+a {
+    color: black;
+}
+
+a.virt-vehicle[aria-expanded="true"] {
+    font-weight: bold;
+}
+
+.disabled {
+    display: none;
+}
+
+/* Статусы */
+.status-small {
+    height: 16px;
+    width: 16px;
+    border-radius: 50%;
+    display: inline-block;
+    text-indent: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.status-big {
+    height: 25px;
+    width: 25px;
+    border-radius: 50%;
+    display: inline-block;
+    text-indent: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+/* Для виртуальной техники (которая как кнопка) */
+.selected {
+    height: 16px;
+    width: 16px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 5px;
+    background-color: #47E011;
+}
+
+.red-col {
+    background-color: #FF0000;
+}
+
+.green-col {
+    background-color: #47E011;
+}
+
+.new-col {
+    background-color: #FFFFFF;
+    border: 4px solid #5088B3;
+}
+
+.header {
+
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.fnt {
+    font-family: 'Roboto', 'Segoe UI', monospace;
+    font-size: 1em;
+}
+
+/* Форма ввода */
+input[type=text] {
+
+    background: #FAF2E6;
+    border: 1px solid rgba(0, 0, 0, 0.75);
+    box-sizing: border-box;
+    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+    border-radius: 5px;
+    width: 100%;
+    font-style: italic;
+}
+
+/* Для лупы */
+/* enable absolute positioning */
+.inner-addon {
+    position: relative;
+}
+
+/* style glyph */
+.inner-addon .fas {
+    position: absolute;
+    padding: 10px;
+    pointer-events: none;
+}
+
+/* align glyph */
+.left-addon .fas {
+    left: 0px;
+}
+
+.right-addon .fas {
+    right: 0px;
+}
+
+/* add padding  */
+.left-addon input {
+    padding-left: 40px;
+}
+
+.right-addon input {
+    padding-right: 30px;
+}
+
+/* Блок сверху, чтобы не было впритык*/
+.margin-block {
+    margin-top: 1%;
+}
+
+body {
+    width: 90%;
+    margin: auto;
+}
+
+.sort-filter {
+    background: #E6F1FA;
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    box-sizing: border-box;
+    border-radius: 5px;
+    padding-left: 1%;
+    margin: 0px;
+}
+
+/* */
+
+.app-back-panel-mp {
+    background: rgba(240, 245, 249, 1);
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    box-sizing: border-box;
+    border-radius: 5px;
+    justify-content: center;
+}
+
+.table_mp {
+    border-collapse: separate;
+    border-spacing: 0 10px;
+    border: 5px solid transparent;
+}
+
+.tr-mp {
+    border: 1px solid rgba(0, 0, 0, 0.25);
+    box-sizing: border-box;
+}
+
+.th-mp {
+    background: rgba(240, 245, 249, 1);
+    top: 0;
+    position: sticky;
+}
+
+.td-mp {
+    align-items: center;
+    border: 1px solid rgba(0, 0, 0, 0.25);
+    box-sizing: border-box;
+}
+
+td:first-of-type {
+    border-radius: 5px 0 0 5px;
+}
+
+td:last-of-type {
+    border-radius: 0 5px 5px 0;
+}
+
+.hovertable tr:hover {
+    transform: scale(1.006, 1.006);
+
+}
+
+.hovertable tr.nohover:hover {
+    transform: scale(1, 1);
+}
+
+.tbody-mp {
+    background: #FAFDFF;
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    box-sizing: border-box;
+    border-bottom: transparent;
+    border-top: transparent;
+}
+
+/*  - Цеха */
+
+/* Скролл таблицы */
+.table-scroll {
+    overflow: auto;
+    height: 570px;
+}
+
+/* Scroll style */
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+    box-shadow: inset 0 0 5px grey;
+    border-radius: 10px;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+    background: rgba(80, 136, 179, 0.4);
+    border-radius: 10px;
+}
+
+/* Приоритеты как цвета фона у tr: Красный - высокий приоритет, желтый - средний, зеленый - низкий
+ Светофор */
+.priority-high {
+    background: rgba(246, 206, 206, 1);
+}
+
+.priority-mid {
+    background: rgba(253, 255, 180, 1);
+}
+
+.priority-low {
+    background: rgba(191, 252, 186, 1);
+}
+
+/* Изображения нет - чтобы перебить bootstrap style */
+.date-picker {
+    background-image: none;
+    padding-right: 5px;
+    margin-left: 10px;
+}
+
+select {
+    text-align: center;
+    text-align-last: center;
+    /* webkit*/
+}
+
+.secured {
+    width: 40px;
+    height: 40px;
+    border-radius: 5px;
+    font-size: 16px;
+    color: #fff;
+    text-align: center;
+    background: #000;
+    font-style: normal;
+}
+
+/* + Timeline style! */
+.vis-item {
+    border-color: transparent;
+    text-align: center;
+    padding: 0px;
+}
+
+.vis-item.busy {
+    background-color: rgba(243, 156, 157, 1) !important;
+}
+
+.vis-item.transparent {
+    background-color: transparent !important;
+    border-color: transparent !important;
+}
+
+.vis-item.work {
+    background-color: rgba(150, 236, 121, 1) !important;
+}
+
+.vis-item.drive {
+    background-color: rgba(164, 238, 234, 1) !important;
+}
+
+.vis-item.bold {
+    background-color: rgba(249, 201, 79, 1) !important;
+}
+
+.vis-item.normal {
+    background-color: rgba(251, 229, 173, 1) !important;
+}
+
+.vis-item.vis-selected {
+    background-color: rgba(255, 255, 255, 1) !important;
+}
+
+.vis-timeline {
+    font-family: 'Roboto', sans-serif;
+    font-size: 16px;
+    background-color: rgba(255, 255, 255, 1);
+    border-radius: 5px;
+}
+
+br {
+    display: block;
+    /* makes it have a width */
+    content: "";
+    /* clears default height */
+    margin-top: 7px;
+    /* change this to whatever height you want it */
+}
+
+.vis-item,
+.vis-item.vis-line {
+
+    background-color: rgba(150, 236, 121, 1);
+}
+
+
+.vis-time-axis .vis-text.vis-major {
+    font-weight: bold;
+}
+
+.vis-time-axis .vis-grid.vis-minor {
+    border-width: 0px;
+}
+
+.vis-time-axis .vis-grid.vis-major {
+    border-width: 0px;
+}
+
+/* - Timeline style! */

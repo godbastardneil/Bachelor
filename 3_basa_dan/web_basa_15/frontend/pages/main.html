@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ru">
+    <head>
+        <meta charset="UTF-8">
+        <script src="/socket.io/socket.io.js"></script>
+        <script src="/js/main.js"></script>
+
+        <title>Лаба_12</title>
+    </head>
+
+    <body>
+        <div class="header">
+            <p class="header_text" id="header_to_main"> Лаба_12</p>
+        </div>
+
+        <div class = "s_searсh">
+
+            <form>
+                <div id="teoty_out_buttons" class="button" style="margin-bottom: 1%; justify-content: space-around;">
+                    <button type="button" class="button" id="b_client">Клиенты</button>
+                </div>
+                <div id="teoty_out_buttons" class="button" style="margin-bottom: 1%; justify-content: space-around;">
+                    <button type="button" class="button" id="b_product">Продукты</button>
+                </div>
+                <p id="kol_t">Поиск: </p>
+                    <input type="text" id="searсh_in" value=""><Br>
+
+                    <input type="radio" name="searсh_rad" value="date_r">Дата<Br>
+                    <input type="radio" name="searсh_rad" value="fio_r">ФИО<Br>
+                    <input type="radio" name="searсh_rad" value="tittle_r">Название<Br>
+
+                <div id="teoty_out_buttons" class="button" style="margin-bottom: 1%; justify-content: space-around;">
+                    <button type="button" class="button" id="b_searсh">Поиск</button>
+                </div>
+            </form>
+
+            <div id="searсh_deal_info">
+                <table id="table_of_searсh" border="1">
+                    <thead>
+                        <tr>
+                            <th>Дата</th>
+                            <th>ФИО</th>
+                            <th>Название</th>
+                            <th>Цена</th>
+                            <th>Кол-во</th>
+                            <th>Признак опта</th>
+                        <tr>
+                    </thead>
+                    <tbody class="tbody-mp"></tbody>
+                </table>
+            </div>
+
+        </div>
+
+        <div class = "main">
+
+            <form>
+                <p id="date_t">Дата: </p>
+                    <input type="date" id="date_in" value=""><Br>
+
+                <p id="fio_t">ФИО: </p>
+                    <p>
+                        <select multiple id="fio_in">
+                            <option value=""></option>
+                       </select>
+                   </p>
+
+                <p id="title_t">Название: </p>
+                    <p>
+                        <select multiple id="title_in">
+                            <option value=""></option>
+                       </select>
+                   </p>
+
+                <p id="kol_t">Кол-во: </p>
+                    <input type="number" id="kol_in" value=""><Br>
+
+                <p id="kol_t">Опт или нет: </p>
+                    <input type="checkbox" id="isOpt_in" value=""><Br>
+
+                <div id="teoty_out_buttons" class="button" style="margin-bottom: 1%; justify-content: space-around;">
+                    <button type="button" class="button" id="b_include">Добавить</button>
+                </div>
+            </form>
+
+            <div id="main_deal_info">
+                <table id="table_of_deals" border="1">
+                    <thead>
+                        <tr>
+                            <th>Дата</th>
+                            <th>ФИО</th>
+                            <th>Название</th>
+                            <th>Цена</th>
+                            <th>Кол-во</th>
+                            <th>Признак опта</th>
+                        <tr>
+                    </thead>
+                    <tbody class="tbody-mp"></tbody>
+                </table>
+            </div>
+
+        </div>
+    </body>
+</html>

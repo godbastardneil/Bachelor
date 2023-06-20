@@ -1,0 +1,37 @@
+﻿@model IEnumerable<Lab3.Models.GroupModel>
+@{
+    ViewData["Title"] = "Список групп";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Список групп</h1>
+    <form method="post">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th scope="col">№</th>
+                    <th scope="col">Название</th>
+                    <th scope="col">Действие</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var gr in Model)
+                {
+                    <tr>
+                        <td scope="row">@gr.idgroup</td>
+                        <td class="w-100">@gr.name</td>
+                        <td nowrap>
+                            <a class="btn btn-outline-primary" asp-controller="Group" asp-action="Update"
+                            asp-route-id="@gr.idgroup">Изменить</a> /
+                            <input class="btn btn-danger" type="submit" value="Удалить"
+                            asp-action="Delete" asp-route-id="@gr.idgroup"> /
+                            <a class="btn btn-outline-success" asp-controller="Student" asp-action="Index"
+                            asp-route-id="@gr.idgroup">Открыть</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </form>
+    <a class="btn btn-outline-primary" asp-controller="Group" asp-action="Create">Добавить новую группу</a>
+</div>

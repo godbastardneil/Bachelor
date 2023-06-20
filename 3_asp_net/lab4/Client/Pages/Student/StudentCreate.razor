@@ -1,0 +1,55 @@
+﻿@page "/Group/{idgroup}/Create"
+@attribute [Authorize]
+
+@using Lab4.Client.Services
+@using Lab4.Shared.DTO
+@using Microsoft.AspNetCore.Authorization
+
+@inject NavigationManager Navigation
+@inject GroupService GroupService
+@inject StudentService StudentService
+
+<div class="text-center">
+    <h1 class="display-4">Добавление нового студента в группу - @GroupName</h1>
+    <EditForm Model="stud">
+        <p>
+            <label for="FIO"><b>Фамилия Имя Отчество: </b></label>
+            <InputText name="FIO" id="FIO" class="w-100" @bind-Value="@stud.FIO" required />
+        </p>
+        <p>
+            <label for="headman_sign"><b>Староста?:</b></label><br>
+            <InputCheckbox name="headman_sign" id="headman_sign" @bind-Value="@stud.headman_sign" />
+        </p>
+        <input type="submit" class="btn btn-success" value="Добавить" @onclick="() => Create(stud)">
+        <a class="btn btn-danger" href="/Group/@idgroup">Назад</a>
+    </EditForm>
+</div>
+
+@code {
+    [Parameter]
+    public string idgroup { get; set; }
+    private string GroupName { get; set; }
+    private CreateStudentDTO stud { get; set; }
+        = new CreateStudentDTO();
+
+    protected override async Task OnInitializedAsync()
+    {
+        GroupName = await GroupService.GetNameOfGroup(idgroup);
+    }
+
+    private async Task Create(CreateStudentDTO new_stud)
+    {
+        if (!String.IsNullOrWhiteSpace(new_stud.FIO))
+        {
+            new_stud.idgroup = new Guid(idgroup);
+            await StudentService.CreateStudent(new_stud);
+            BackToStudents();
+        }
+    }
+
+    private void BackToStudents()
+    {
+        Navigation.NavigateTo($"/Group/{idgroup}");
+        return;
+    }
+}

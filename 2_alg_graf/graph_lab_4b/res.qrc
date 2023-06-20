@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/">
+        <file>files/metal.jpg</file>
+        <file>files/teapot.obj</file>
+        <file>files/marble.jpg</file>
+        <file>files/copel.obj</file>
+    </qresource>
+</RCC>

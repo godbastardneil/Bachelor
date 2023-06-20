@@ -1,0 +1,121 @@
+#include<vector>
+#include<iostream>
+#include<string>
+
+using namespace std;
+
+struct charC{
+	char chr;
+	int count;
+	float prop;
+};
+
+void main(){
+	vector<string> tmpS, res;
+	vector<charC> voc;
+	charC *tmpCChr;
+	string srcStr;
+	vector<vector<float>> mas1;
+	vector<float> tmpM;
+	vector<int> poses;
+	int i, j, Count, tmpV;
+	float tmpInt;
+	setlocale(LC_ALL, "rus");
+	//cin >> noskipws >> srcStr;
+	srcStr = "мама мыла раму";
+	bool add;
+
+	for (i = 0; i < srcStr.length(); i++){
+		add = true;
+		for (j = 0; j < voc.size(); j++){
+			tmpCChr = &voc[j];
+			if (tmpCChr->chr == srcStr[i]){
+				tmpCChr->count = tmpCChr->count + 1;
+				add = false;
+			}
+		}
+		if (add){
+			tmpCChr = new charC;
+			tmpCChr->chr = srcStr[i];
+			tmpCChr->count = 1;
+			voc.push_back(*tmpCChr);
+		}
+	}
+	tmpM.clear();
+	mas1.push_back(tmpM);
+	Count = srcStr.length();
+	for (i = 0; i < voc.size(); i++){
+		tmpCChr = &voc[i];
+		tmpCChr->prop = tmpCChr->count*1.0 / Count;
+		mas1[0].push_back(tmpCChr->prop);
+	}
+
+	while (i<mas1[0].size() - 1){
+		if (mas1[0][i] < mas1[0][i + 1]){
+			tmpV = mas1[0][i];
+			mas1[0][1] = mas1[0][i + 1];
+			mas1[0][i + 1] = tmpV;
+			i = 0;
+		}
+		else{
+			i++;
+		}
+	}
+
+
+	i = 0;
+	while (mas1[i].size()>2){
+		tmpInt = mas1[i][mas1[i].size() - 1] + mas1[i][mas1[i].size() - 2];
+		for (j = 0; j < mas1[i].size() - 2; j++){
+			tmpM.push_back(mas1[i][j]);
+		}
+		j = tmpM.size() - 1;
+		add = false;
+		while (j >= 0){
+			if (tmpM[j]>tmpInt){
+				tmpM.insert(tmpM.begin() + j + 1, tmpInt);
+				poses.push_back(j + 1);
+				j = -1;
+				add = true;
+			}
+			j--;
+		}
+		if (!add){
+			tmpM.insert(tmpM.begin(), tmpInt);
+			poses.push_back(0);
+		}
+		mas1.push_back(tmpM);
+		tmpM.clear();
+		i++;
+	}
+	res.push_back("0");
+	res.push_back("1");
+	i = mas1.size() - 1;
+	while (i>0){
+		for (j = 0; j <= mas1[i].size() - 1; j++){
+			if (poses[i - 1] != j){
+				tmpS.push_back(res[j]);
+			}
+		}
+		tmpS.push_back(res[poses[i - 1]] + "0");
+		tmpS.push_back(res[poses[i - 1]] + "1");
+		res = tmpS;
+		tmpS.clear();
+		i--;
+	}
+	cout << "\nКодировка:\n";
+	for (i = 0; i < res.size(); i++){
+		tmpCChr = &voc[i];
+		cout << tmpCChr->chr << ": " << res[i] << "\n";
+	}
+	cout << "\n Закодированое сообщение:\n";
+	for (i = 0; i<srcStr.length(); i++){
+		for (j = 0; j<voc.size(); j++){
+			tmpCChr = &voc[j];
+			if (tmpCChr->chr == srcStr[i]){
+				cout << res[j] << " ";
+			}
+		}
+	}
+	system("pause");
+}

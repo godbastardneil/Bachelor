@@ -1,0 +1,124 @@
+body {
+    margin: 0;
+    font-family: sans-serif;
+    background: rgb(237, 238, 240)
+}
+
+.header_content_infomenu {
+    /* Цвет фона */
+    background: rgb(212, 212, 212);
+}
+
+.no_link {
+    color: black;
+}
+
+header {
+    /* Для старых браузеров */
+    display: block;
+    /* Цетровка*/
+    text-align: center;
+    /* Цвет фона */
+    background: white;
+    /* Цвет текста */
+    color: black;
+    /* Границы */
+    /* Параметры границы */
+    border-bottom: 1px solid rgb(212, 212, 212);
+    /* Размытие */
+    box-shadow: 0 1px 10px rgb(0 0 0 / 10%);
+    /* Возможность прокрутки */
+    position: sticky;
+    top: 0;
+}
+
+h1 {
+    font-size: 24pt;
+    margin: 0;
+    /* Цетровка*/
+    text-align: center;
+}
+
+h3 {
+    border-top: 1px solid rgb(212, 212, 212);
+    border-bottom: 1px solid rgb(212, 212, 212);
+    margin: 0;
+    /* Цетровка*/
+    text-align: center;
+}
+
+form button {
+    border: 1px solid rgb(212, 212, 212);
+    padding-left: 5%;
+    padding-right: 5%;
+    background: white;
+}
+
+p {
+    /* Отступ первой строки в пикселах */
+    text-indent: 20px;
+    line-height: 1.5;
+}
+
+.main_content {
+    margin-left: 30pt;
+    margin-right: 30pt;
+}
+
+.main_content section {
+    margin-top: 10pt;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    flex-direction: column;
+    flex-wrap: wrap;
+}
+
+.main_content section div {
+    background: white;
+    padding: 15pt;
+    overflow: hidden;
+    /* Границы */
+    /* Параметры границы */
+    border-bottom: 1px solid rgb(212, 212, 212);
+    border-radius: 5px;
+    /* Размытие */
+    box-shadow: 0 1px 10px rgb(0 0 0 / 10%);
+}
+
+#init {
+    margin-left: 600pt;
+    margin-right: 600pt;
+}
+
+img {
+    border-radius: 5px;
+}
+
+table {
+    width: 100%;
+    /* Ширина таблицы */
+    border: 4px double black;
+    /* Рамка вокруг таблицы */
+    border-collapse: collapse;
+    /* Отображать только одинарные линии */
+    border-spacing: 2;
+}
+
+th {
+    text-align: left;
+    /* Выравнивание по левому краю */
+    background: #ccc;
+    /* Цвет фона ячеек */
+    padding: 5px;
+    /* Поля вокруг содержимого ячеек */
+    border: 1px solid black;
+    /* Граница вокруг ячеек */
+}
+
+td {
+    padding: 5px;
+    /* Поля вокруг содержимого ячеек */
+    border: 1px solid black;
+    /* Граница вокруг ячеек */
+}

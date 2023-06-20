@@ -1,0 +1,1639 @@
+-- rules
+CREATE ROLE lab_work WITH
+  LOGIN
+  NOSUPERUSER
+  NOINHERIT
+  NOCREATEDB
+  NOCREATEROLE
+  NOREPLICATION
+  ENCRYPTED PASSWORD 'md56017ae479175a52ea1f3801ce1163f0b';
+GRANT postgres TO lab_work;
+
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 13.3 (Debian 13.3-1.pgdg100+1)
+-- Dumped by pg_dump version 13.3 (Debian 13.3-1.pgdg100+1)
+
+-- Started on 2021-07-02 00:01:12 +04
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- TOC entry 3116 (class 1262 OID 17966)
+-- Name: training_base; Type: DATABASE; Schema: -; Owner: postgres
+--
+
+CREATE DATABASE training_base WITH TEMPLATE = template0 ENCODING = 'UTF8' LOCALE = 'ru_RU.UTF-8';
+
+
+ALTER DATABASE training_base OWNER TO postgres;
+
+\connect training_base
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- TOC entry 223 (class 1255 OID 17967)
+-- Name: add_ex_to_test(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.add_ex_to_test() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+	INSERT INTO "ex_stat" ("idtest_stat", "idtest_ex")
+		SELECT new."idtest_stat", "idtest_ex" FROM "test_ex";
+	RETURN new;
+END;
+$$;
+
+
+ALTER FUNCTION public.add_ex_to_test() OWNER TO postgres;
+
+--
+-- TOC entry 224 (class 1255 OID 17968)
+-- Name: add_query_to_lab(); Type: FUNCTION; Schema: public; Owner: lab_work
+--
+
+CREATE FUNCTION public.add_query_to_lab() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+	INSERT INTO "query_stat" ("idlab_stat", "idlab_query")
+		SELECT new."idlab_stat", "idlab_query" FROM "lab_query";
+	RETURN new;
+END;
+$$;
+
+
+ALTER FUNCTION public.add_query_to_lab() OWNER TO lab_work;
+
+--
+-- TOC entry 225 (class 1255 OID 17969)
+-- Name: add_quest_to_kontr(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.add_quest_to_kontr() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+	INSERT INTO "quest_stat" ("idkontr_stat", "idkontr_quest")
+		SELECT new."idkontr_stat", "idkontr_quest" FROM "kontr_quest";
+	RETURN new;
+END;
+$$;
+
+
+ALTER FUNCTION public.add_quest_to_kontr() OWNER TO postgres;
+
+--
+-- TOC entry 226 (class 1255 OID 17970)
+-- Name: check_query(text, text); Type: FUNCTION; Schema: public; Owner: lab_work
+--
+
+CREATE FUNCTION public.check_query(que text, r_que text) RETURNS boolean
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+	tab record;
+BEGIN
+	Execute que;
+	Execute r_que;
+	
+	RETURN NOT exists((SELECT * from user_table) EXCEPT (SELECT * from prog_table));
+END;
+$$;
+
+
+ALTER FUNCTION public.check_query(que text, r_que text) OWNER TO lab_work;
+
+--
+-- TOC entry 227 (class 1255 OID 17971)
+-- Name: check_user(integer, text); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.check_user(id integer, pas text) RETURNS boolean
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+	RETURN ((select idstudent
+			from student
+			where idstudent = id
+				and password = pas) is not NULL);
+END;
+$$;
+
+
+ALTER FUNCTION public.check_user(id integer, pas text) OWNER TO postgres;
+
+--
+-- TOC entry 228 (class 1255 OID 17972)
+-- Name: create_data(); Type: PROCEDURE; Schema: public; Owner: postgres
+--
+
+CREATE PROCEDURE public.create_data()
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+	i integer;
+	dats date[];
+	ex_data date;
+	min_plan integer;
+	max_plan integer;
+	id_gr integer;
+BEGIN
+	call delete_data();
+		
+	insert into "user_table" ("col_2", "col_3", "col_4")
+		values ('col_2', 1.0, B'1001'), ('col_2', 1.0, B'1001'),
+			('col_2', 1.0, B'1001'), ('col_2', 1.0, B'1001');
+		
+	insert into "prog_table" ("col_2", "col_3", "col_4")
+		values ('col_2', 1.0, B'1001'), ('col_2', 1.0, B'1001'),
+			('col_2', 1.0, B'1001'), ('col_2', 1.0, B'1001');
+END;
+$$;
+
+
+ALTER PROCEDURE public.create_data() OWNER TO postgres;
+
+--
+-- TOC entry 229 (class 1255 OID 17973)
+-- Name: create_test(integer); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.create_test(id integer) RETURNS integer
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+	INSERT INTO "test_stat" ("idstudent") VALUES (id);
+	RETURN (SELECT "idtest_stat" FROM "test_stat" ORDER BY "idtest_stat" DESC LIMIT 1);
+END;
+$$;
+
+
+ALTER FUNCTION public.create_test(id integer) OWNER TO postgres;
+
+--
+-- TOC entry 230 (class 1255 OID 17974)
+-- Name: delete_data(); Type: PROCEDURE; Schema: public; Owner: postgres
+--
+
+CREATE PROCEDURE public.delete_data()
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+	delete from "ex_stat";
+	delete from "quest_stat";
+	delete from "query_stat";
+	delete from "test_stat";
+	delete from "kontr_stat";
+	delete from "lab_stat";
+	
+	delete from "user_table";
+	delete from "prog_table";
+	
+	alter sequence ex_stat_idex_stat_seq restart;
+	alter sequence quest_stat_idquest_stat_seq restart;
+	alter sequence query_stat_idquery_stat_seq restart;
+	alter sequence test_stat_idtest_stat_seq restart;
+	alter sequence kontr_stat_idkontr_stat_seq restart;
+	alter sequence lab_stat_idlab_stat_seq restart;
+	
+	alter sequence user_table_col_1_seq restart;	
+	alter sequence prog_table_col_1_seq restart;
+END;
+$$;
+
+
+ALTER PROCEDURE public.delete_data() OWNER TO postgres;
+
+--
+-- TOC entry 231 (class 1255 OID 17975)
+-- Name: do_right_query(text); Type: PROCEDURE; Schema: public; Owner: postgres
+--
+
+CREATE PROCEDURE public.do_right_query(r_que text)
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+	Execute r_que;
+	call refrash_table();
+END;
+$$;
+
+
+ALTER PROCEDURE public.do_right_query(r_que text) OWNER TO postgres;
+
+--
+-- TOC entry 235 (class 1255 OID 17976)
+-- Name: get_first_lab_table(); Type: FUNCTION; Schema: public; Owner: lab_work
+--
+
+CREATE FUNCTION public.get_first_lab_table() RETURNS TABLE(col_1 integer, col_2 text, col_3 real, col_4 bit)
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+	
+	delete from "user_table";
+	delete from "prog_table";
+	
+	alter sequence user_table_col_1_seq restart;	
+	alter sequence prog_table_col_1_seq restart;
+	
+		
+	insert into "user_table" ("col_2", "col_3", "col_4")
+		values ('col_2', 1.0, B'1001'), ('col_2', 1.0, B'1001'),
+			('col_2', 1.0, B'1001'), ('col_2', 1.0, B'1001');
+	insert into "prog_table" ("col_2", "col_3", "col_4")
+		values ('col_2', 1.0, B'1001'), ('col_2', 1.0, B'1001'),
+			('col_2', 1.0, B'1001'), ('col_2', 1.0, B'1001');
+			
+	RETURN QUERY (select ut."col_1", ut."col_2", ut."col_3", ut."col_4"
+			from "user_table" ut);
+END;
+$$;
+
+
+ALTER FUNCTION public.get_first_lab_table() OWNER TO lab_work;
+
+--
+-- TOC entry 236 (class 1255 OID 17977)
+-- Name: get_kontr_stat(integer); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.get_kontr_stat(id integer) RETURNS TABLE(idkontr_stat integer, date_kontr text, rating integer)
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+	RETURN QUERY (select ks."idkontr_stat", to_char(ks."date_kontr", 'dd:mm:yyyy'), ks."rating"
+			from "kontr_stat" ks
+			where ks."idstudent" = id);
+END;
+$$;
+
+
+ALTER FUNCTION public.get_kontr_stat(id integer) OWNER TO postgres;
+
+--
+-- TOC entry 248 (class 1255 OID 17978)
+-- Name: get_lab_query(); Type: FUNCTION; Schema: public; Owner: lab_work
+--
+
+CREATE FUNCTION public.get_lab_query() RETURNS TABLE(idlab_query integer, question text, right_query text, need_this text[])
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+	RETURN QUERY (SELECT lq."idlab_query", lq."question", lq."right_query", lq."need_this"
+		FROM "lab_query" lq order by lq."idlab_query");
+END;
+$$;
+
+
+ALTER FUNCTION public.get_lab_query() OWNER TO lab_work;
+
+--
+-- TOC entry 249 (class 1255 OID 17979)
+-- Name: get_lab_stat(integer); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.get_lab_stat(id integer) RETURNS TABLE(idlab_stat integer, date_lab text, rating integer)
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+	RETURN QUERY (select ls."idlab_stat", to_char(ls."date_lab", 'dd:mm:yyyy'), ls."rating"
+			from "lab_stat" ls
+			where ls."idstudent" = id);
+END;
+$$;
+
+
+ALTER FUNCTION public.get_lab_stat(id integer) OWNER TO postgres;
+
+--
+-- TOC entry 250 (class 1255 OID 17980)
+-- Name: get_test_stat(integer); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.get_test_stat(id integer) RETURNS TABLE(idtest_stat integer, date_test text, rating integer)
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+	RETURN QUERY (select ts."idtest_stat", to_char(ts."date_test", 'dd:mm:yyyy'), ts."rating"
+			from "test_stat" ts
+			where ts."idstudent" = id);
+END;
+$$;
+
+
+ALTER FUNCTION public.get_test_stat(id integer) OWNER TO postgres;
+
+--
+-- TOC entry 251 (class 1255 OID 17981)
+-- Name: init_kontr_stat(integer, text[]); Type: PROCEDURE; Schema: public; Owner: postgres
+--
+
+CREATE PROCEDURE public.init_kontr_stat(id integer, anss text[])
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+	quest record;
+	i integer;
+	id_of_stat integer;
+BEGIN
+	INSERT INTO "kontr_stat" ("idstudent") VALUES (id);
+	id_of_stat := (SELECT "idkontr_stat" FROM "kontr_stat" ORDER BY "idkontr_stat" DESC LIMIT 1);
+	i := 1;
+	FOR quest IN (select kq."idkontr_quest", kq."right_answer" from "kontr_quest" kq order by kq."idkontr_quest") LOOP
+		
+		UPDATE "quest_stat" qs SET "rating" = (lower(anss[i]) = ANY(quest."right_answer")), "answer" = anss[i]
+		WHERE qs."idkontr_quest" = quest."idkontr_quest" and qs."idkontr_stat" = id_of_stat;
+		i := i+1;
+	END LOOP;
+END;
+$$;
+
+
+ALTER PROCEDURE public.init_kontr_stat(id integer, anss text[]) OWNER TO postgres;
+
+--
+-- TOC entry 252 (class 1255 OID 17982)
+-- Name: init_lab_stat(integer, boolean[], text[]); Type: PROCEDURE; Schema: public; Owner: postgres
+--
+
+CREATE PROCEDURE public.init_lab_stat(id integer, res boolean[], anss text[])
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+	query_ record;
+	i integer;
+	id_of_stat integer;
+BEGIN
+	INSERT INTO "lab_stat" ("idstudent") VALUES (id);
+	id_of_stat := (SELECT "idlab_stat" FROM "lab_stat" ORDER BY "idlab_stat" DESC LIMIT 1);
+	i := 1;
+	FOR query_ IN (select lq."idlab_query" from "lab_query" lq order by lq."idlab_query") LOOP
+		
+		UPDATE "query_stat" ql SET "rating" = res[i], "answer" = anss[i]
+		WHERE ql."idlab_query" = query_."idlab_query" and ql."idlab_stat" = id_of_stat;
+		i := i+1;
+	END LOOP;
+END;
+$$;
+
+
+ALTER PROCEDURE public.init_lab_stat(id integer, res boolean[], anss text[]) OWNER TO postgres;
+
+--
+-- TOC entry 253 (class 1255 OID 17983)
+-- Name: init_test_stat(integer, integer, integer[]); Type: PROCEDURE; Schema: public; Owner: postgres
+--
+
+CREATE PROCEDURE public.init_test_stat(id integer, id_of_ex integer, anss integer[])
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+	r_arr integer[];
+	j integer;
+	rat integer;
+BEGIN
+	r_arr := (select te."right_answers" from "test_ex" te where te."idtest_ex" = id_of_ex);
+	
+	j := 1;
+	rat := 0;
+	WHILE (j <= array_length(anss, 1)) LOOP
+		IF (anss[j] = ANY(r_arr)) THEN
+			rat := rat+1;
+		ELSE
+			rat := rat-1;
+		END IF;
+		j := j+1;
+	END LOOP;
+	UPDATE "ex_stat" ex SET "rating" = rat, "answers" = anss
+	WHERE ex."idtest_ex" = id_of_ex and ex."idtest_stat" = id;
+END;
+$$;
+
+
+ALTER PROCEDURE public.init_test_stat(id integer, id_of_ex integer, anss integer[]) OWNER TO postgres;
+
+--
+-- TOC entry 254 (class 1255 OID 17984)
+-- Name: kontr_rating_sum(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.kontr_rating_sum() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+	IF (old."rating" <> new."rating") THEN
+		UPDATE "kontr_stat"
+		SET "rating" = "rating"+1
+		WHERE "idkontr_stat" = new."idkontr_stat";
+	END IF;
+	RETURN new;
+END;
+$$;
+
+
+ALTER FUNCTION public.kontr_rating_sum() OWNER TO postgres;
+
+--
+-- TOC entry 232 (class 1255 OID 17985)
+-- Name: lab_rating_sum(); Type: FUNCTION; Schema: public; Owner: lab_work
+--
+
+CREATE FUNCTION public.lab_rating_sum() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+	IF (old."rating" <> new."rating") THEN
+		UPDATE "lab_stat"
+		SET "rating" = "rating"+1
+		WHERE "idlab_stat" = new."idlab_stat";
+	END IF;
+	RETURN new;
+END;
+$$;
+
+
+ALTER FUNCTION public.lab_rating_sum() OWNER TO lab_work;
+
+--
+-- TOC entry 233 (class 1255 OID 17986)
+-- Name: refrash_table(); Type: PROCEDURE; Schema: public; Owner: lab_work
+--
+
+CREATE PROCEDURE public.refrash_table()
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+	delete from user_table;
+	insert into user_table select * from prog_table;
+END;
+$$;
+
+
+ALTER PROCEDURE public.refrash_table() OWNER TO lab_work;
+
+--
+-- TOC entry 234 (class 1255 OID 17987)
+-- Name: test_rating_sum(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.test_rating_sum() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+	IF (old."rating" <> new."rating") THEN
+		RAISE NOTICE 'new.rating - %', new."rating";
+		UPDATE "test_stat"
+		SET "rating" = "rating"+new."rating"
+		WHERE "idtest_stat" = new."idtest_stat";
+	END IF;
+	RETURN new;
+END;
+$$;
+
+
+ALTER FUNCTION public.test_rating_sum() OWNER TO postgres;
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- TOC entry 200 (class 1259 OID 17988)
+-- Name: ex_stat; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.ex_stat (
+    idex_stat integer NOT NULL,
+    answers integer[],
+    rating integer DEFAULT 0 NOT NULL,
+    idtest_ex integer NOT NULL,
+    idtest_stat integer NOT NULL,
+    CONSTRAINT test_stat_check CHECK ((rating <= array_length(answers, 1)))
+);
+
+
+ALTER TABLE public.ex_stat OWNER TO postgres;
+
+--
+-- TOC entry 201 (class 1259 OID 17996)
+-- Name: ex_stat_idex_stat_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.ex_stat_idex_stat_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.ex_stat_idex_stat_seq OWNER TO postgres;
+
+--
+-- TOC entry 3117 (class 0 OID 0)
+-- Dependencies: 201
+-- Name: ex_stat_idex_stat_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.ex_stat_idex_stat_seq OWNED BY public.ex_stat.idex_stat;
+
+
+--
+-- TOC entry 202 (class 1259 OID 17998)
+-- Name: kontr_quest; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.kontr_quest (
+    idkontr_quest integer NOT NULL,
+    question text NOT NULL,
+    right_answer text[] NOT NULL
+);
+
+
+ALTER TABLE public.kontr_quest OWNER TO postgres;
+
+--
+-- TOC entry 203 (class 1259 OID 18004)
+-- Name: kontr_quest_idkontr_quest_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.kontr_quest_idkontr_quest_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.kontr_quest_idkontr_quest_seq OWNER TO postgres;
+
+--
+-- TOC entry 3118 (class 0 OID 0)
+-- Dependencies: 203
+-- Name: kontr_quest_idkontr_quest_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.kontr_quest_idkontr_quest_seq OWNED BY public.kontr_quest.idkontr_quest;
+
+
+--
+-- TOC entry 204 (class 1259 OID 18006)
+-- Name: kontr_stat; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.kontr_stat (
+    idkontr_stat integer NOT NULL,
+    idstudent integer NOT NULL,
+    date_kontr date DEFAULT now() NOT NULL,
+    rating integer DEFAULT 0 NOT NULL
+);
+
+
+ALTER TABLE public.kontr_stat OWNER TO postgres;
+
+--
+-- TOC entry 205 (class 1259 OID 18011)
+-- Name: kontr_stat_idkontr_stat_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.kontr_stat_idkontr_stat_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.kontr_stat_idkontr_stat_seq OWNER TO postgres;
+
+--
+-- TOC entry 3119 (class 0 OID 0)
+-- Dependencies: 205
+-- Name: kontr_stat_idkontr_stat_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.kontr_stat_idkontr_stat_seq OWNED BY public.kontr_stat.idkontr_stat;
+
+
+--
+-- TOC entry 206 (class 1259 OID 18013)
+-- Name: lab_query; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.lab_query (
+    idlab_query integer NOT NULL,
+    question text NOT NULL,
+    right_query text NOT NULL,
+    need_this text[]
+);
+
+
+ALTER TABLE public.lab_query OWNER TO postgres;
+
+--
+-- TOC entry 207 (class 1259 OID 18019)
+-- Name: lab_query_idlab_query_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.lab_query_idlab_query_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.lab_query_idlab_query_seq OWNER TO postgres;
+
+--
+-- TOC entry 3121 (class 0 OID 0)
+-- Dependencies: 207
+-- Name: lab_query_idlab_query_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.lab_query_idlab_query_seq OWNED BY public.lab_query.idlab_query;
+
+
+--
+-- TOC entry 208 (class 1259 OID 18021)
+-- Name: lab_stat; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.lab_stat (
+    idlab_stat integer NOT NULL,
+    idstudent integer NOT NULL,
+    date_lab date DEFAULT now() NOT NULL,
+    rating integer DEFAULT 0 NOT NULL
+);
+
+
+ALTER TABLE public.lab_stat OWNER TO postgres;
+
+--
+-- TOC entry 209 (class 1259 OID 18026)
+-- Name: lab_stat_idlab_stat_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.lab_stat_idlab_stat_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.lab_stat_idlab_stat_seq OWNER TO postgres;
+
+--
+-- TOC entry 3124 (class 0 OID 0)
+-- Dependencies: 209
+-- Name: lab_stat_idlab_stat_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.lab_stat_idlab_stat_seq OWNED BY public.lab_stat.idlab_stat;
+
+
+--
+-- TOC entry 210 (class 1259 OID 18028)
+-- Name: prog_table; Type: TABLE; Schema: public; Owner: lab_work
+--
+
+CREATE TABLE public.prog_table (
+    col_1 integer NOT NULL,
+    col_2 text,
+    col_3 real,
+    col_4 bit(4)
+);
+
+
+ALTER TABLE public.prog_table OWNER TO lab_work;
+
+--
+-- TOC entry 211 (class 1259 OID 18034)
+-- Name: prog_table_col_1_seq; Type: SEQUENCE; Schema: public; Owner: lab_work
+--
+
+CREATE SEQUENCE public.prog_table_col_1_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.prog_table_col_1_seq OWNER TO lab_work;
+
+--
+-- TOC entry 3127 (class 0 OID 0)
+-- Dependencies: 211
+-- Name: prog_table_col_1_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: lab_work
+--
+
+ALTER SEQUENCE public.prog_table_col_1_seq OWNED BY public.prog_table.col_1;
+
+
+--
+-- TOC entry 212 (class 1259 OID 18036)
+-- Name: query_stat; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.query_stat (
+    idquery_stat integer NOT NULL,
+    answer text,
+    rating boolean DEFAULT false NOT NULL,
+    idlab_query integer NOT NULL,
+    idlab_stat integer NOT NULL
+);
+
+
+ALTER TABLE public.query_stat OWNER TO postgres;
+
+--
+-- TOC entry 213 (class 1259 OID 18043)
+-- Name: query_stat_idquery_stat_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.query_stat_idquery_stat_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.query_stat_idquery_stat_seq OWNER TO postgres;
+
+--
+-- TOC entry 3130 (class 0 OID 0)
+-- Dependencies: 213
+-- Name: query_stat_idquery_stat_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.query_stat_idquery_stat_seq OWNED BY public.query_stat.idquery_stat;
+
+
+--
+-- TOC entry 214 (class 1259 OID 18045)
+-- Name: quest_stat; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.quest_stat (
+    idquest_stat integer NOT NULL,
+    answer text,
+    rating boolean DEFAULT false NOT NULL,
+    idkontr_quest integer NOT NULL,
+    idkontr_stat integer NOT NULL
+);
+
+
+ALTER TABLE public.quest_stat OWNER TO postgres;
+
+--
+-- TOC entry 215 (class 1259 OID 18052)
+-- Name: quest_stat_idquest_stat_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.quest_stat_idquest_stat_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.quest_stat_idquest_stat_seq OWNER TO postgres;
+
+--
+-- TOC entry 3132 (class 0 OID 0)
+-- Dependencies: 215
+-- Name: quest_stat_idquest_stat_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.quest_stat_idquest_stat_seq OWNED BY public.quest_stat.idquest_stat;
+
+
+--
+-- TOC entry 216 (class 1259 OID 18054)
+-- Name: student; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.student (
+    idstudent integer NOT NULL,
+    password text NOT NULL,
+    "FIO" text NOT NULL
+);
+
+
+ALTER TABLE public.student OWNER TO postgres;
+
+--
+-- TOC entry 217 (class 1259 OID 18060)
+-- Name: test_ex; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.test_ex (
+    idtest_ex integer NOT NULL,
+    question text NOT NULL,
+    variants text[] NOT NULL,
+    right_answers integer[] NOT NULL
+);
+
+
+ALTER TABLE public.test_ex OWNER TO postgres;
+
+--
+-- TOC entry 218 (class 1259 OID 18066)
+-- Name: test_ex_idtest_ex_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.test_ex_idtest_ex_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.test_ex_idtest_ex_seq OWNER TO postgres;
+
+--
+-- TOC entry 3133 (class 0 OID 0)
+-- Dependencies: 218
+-- Name: test_ex_idtest_ex_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.test_ex_idtest_ex_seq OWNED BY public.test_ex.idtest_ex;
+
+
+--
+-- TOC entry 219 (class 1259 OID 18068)
+-- Name: test_stat; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.test_stat (
+    idtest_stat integer NOT NULL,
+    idstudent integer NOT NULL,
+    date_test date DEFAULT now() NOT NULL,
+    rating integer DEFAULT 0 NOT NULL
+);
+
+
+ALTER TABLE public.test_stat OWNER TO postgres;
+
+--
+-- TOC entry 220 (class 1259 OID 18073)
+-- Name: test_stat_idtest_stat_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.test_stat_idtest_stat_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.test_stat_idtest_stat_seq OWNER TO postgres;
+
+--
+-- TOC entry 3134 (class 0 OID 0)
+-- Dependencies: 220
+-- Name: test_stat_idtest_stat_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.test_stat_idtest_stat_seq OWNED BY public.test_stat.idtest_stat;
+
+
+--
+-- TOC entry 221 (class 1259 OID 18075)
+-- Name: user_table; Type: TABLE; Schema: public; Owner: lab_work
+--
+
+CREATE TABLE public.user_table (
+    col_1 integer NOT NULL,
+    col_2 text,
+    col_3 real,
+    col_4 bit(4)
+);
+
+
+ALTER TABLE public.user_table OWNER TO lab_work;
+
+--
+-- TOC entry 222 (class 1259 OID 18081)
+-- Name: user_table_col_1_seq; Type: SEQUENCE; Schema: public; Owner: lab_work
+--
+
+CREATE SEQUENCE public.user_table_col_1_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.user_table_col_1_seq OWNER TO lab_work;
+
+--
+-- TOC entry 3136 (class 0 OID 0)
+-- Dependencies: 222
+-- Name: user_table_col_1_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: lab_work
+--
+
+ALTER SEQUENCE public.user_table_col_1_seq OWNED BY public.user_table.col_1;
+
+
+--
+-- TOC entry 2898 (class 2604 OID 18083)
+-- Name: ex_stat idex_stat; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.ex_stat ALTER COLUMN idex_stat SET DEFAULT nextval('public.ex_stat_idex_stat_seq'::regclass);
+
+
+--
+-- TOC entry 2900 (class 2604 OID 18084)
+-- Name: kontr_quest idkontr_quest; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.kontr_quest ALTER COLUMN idkontr_quest SET DEFAULT nextval('public.kontr_quest_idkontr_quest_seq'::regclass);
+
+
+--
+-- TOC entry 2903 (class 2604 OID 18085)
+-- Name: kontr_stat idkontr_stat; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.kontr_stat ALTER COLUMN idkontr_stat SET DEFAULT nextval('public.kontr_stat_idkontr_stat_seq'::regclass);
+
+
+--
+-- TOC entry 2904 (class 2604 OID 18086)
+-- Name: lab_query idlab_query; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.lab_query ALTER COLUMN idlab_query SET DEFAULT nextval('public.lab_query_idlab_query_seq'::regclass);
+
+
+--
+-- TOC entry 2907 (class 2604 OID 18087)
+-- Name: lab_stat idlab_stat; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.lab_stat ALTER COLUMN idlab_stat SET DEFAULT nextval('public.lab_stat_idlab_stat_seq'::regclass);
+
+
+--
+-- TOC entry 2908 (class 2604 OID 18088)
+-- Name: prog_table col_1; Type: DEFAULT; Schema: public; Owner: lab_work
+--
+
+ALTER TABLE ONLY public.prog_table ALTER COLUMN col_1 SET DEFAULT nextval('public.prog_table_col_1_seq'::regclass);
+
+
+--
+-- TOC entry 2910 (class 2604 OID 18089)
+-- Name: query_stat idquery_stat; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.query_stat ALTER COLUMN idquery_stat SET DEFAULT nextval('public.query_stat_idquery_stat_seq'::regclass);
+
+
+--
+-- TOC entry 2912 (class 2604 OID 18090)
+-- Name: quest_stat idquest_stat; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.quest_stat ALTER COLUMN idquest_stat SET DEFAULT nextval('public.quest_stat_idquest_stat_seq'::regclass);
+
+
+--
+-- TOC entry 2913 (class 2604 OID 18091)
+-- Name: test_ex idtest_ex; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.test_ex ALTER COLUMN idtest_ex SET DEFAULT nextval('public.test_ex_idtest_ex_seq'::regclass);
+
+
+--
+-- TOC entry 2917 (class 2604 OID 18092)
+-- Name: test_stat idtest_stat; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.test_stat ALTER COLUMN idtest_stat SET DEFAULT nextval('public.test_stat_idtest_stat_seq'::regclass);
+
+
+--
+-- TOC entry 2918 (class 2604 OID 18093)
+-- Name: user_table col_1; Type: DEFAULT; Schema: public; Owner: lab_work
+--
+
+ALTER TABLE ONLY public.user_table ALTER COLUMN col_1 SET DEFAULT nextval('public.user_table_col_1_seq'::regclass);
+
+
+--
+-- TOC entry 3088 (class 0 OID 17988)
+-- Dependencies: 200
+-- Data for Name: ex_stat; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+
+
+--
+-- TOC entry 3090 (class 0 OID 17998)
+-- Dependencies: 202
+-- Data for Name: kontr_quest; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO public.kontr_quest (idkontr_quest, question, right_answer) VALUES (1, 'На что оканчивается команда в SQL-программе?', '{;,"точка с запятой","точку с запятой","на точку с запятой","на ;"}');
+INSERT INTO public.kontr_quest (idkontr_quest, question, right_answer) VALUES (2, 'Как называют компоненты USER_TABLE и COLUMN_1 в коменде: UPDATE USER_TABLE SET COLUMN_1 = 1?', '{идентификатор,идентификатором,идентификаторы,идентификаторами}');
+INSERT INTO public.kontr_quest (idkontr_quest, question, right_answer) VALUES (3, 'Могут ли идентификатор или ключевое слово начитаться с цифр или значка $?', '{нет,"не может","не могут","нет, не может","нет, не могут"}');
+INSERT INTO public.kontr_quest (idkontr_quest, question, right_answer) VALUES (4, 'Равносильны ли записи: UPDATE USER_TABLE SET COLUMN_1 = 1, uPDaTE user_TabLE SeT colUMN = 1?', '{да,равносильны,"записи равносильны","да, равносильны","да, записи равносильны"}');
+INSERT INTO public.kontr_quest (idkontr_quest, question, right_answer) VALUES (5, 'Какое ключевое клово нужно добавить после строки в UNICODE, что бы в место обратной косой черты использовать другой спецсимвол?', '{uescape}');
+INSERT INTO public.kontr_quest (idkontr_quest, question, right_answer) VALUES (6, 'Эквиваленты ли SELECT `foo``bar`, SELECT `foo`	`bar`?', '{нет,"не эквиваленты","не эквивалентны","нет, не эквиваленты","нет, не эквивалентны"}');
+INSERT INTO public.kontr_quest (idkontr_quest, question, right_answer) VALUES (7, 'С чего начинается строка со спецпоследовательностями?', '{e}');
+INSERT INTO public.kontr_quest (idkontr_quest, question, right_answer) VALUES (8, 'С чего начинается битовая константа в 16-ом виде?', '{x}');
+INSERT INTO public.kontr_quest (idkontr_quest, question, right_answer) VALUES (9, 'Каким типом считаются числовые константы с десятичными и/или экспонентой?', '{numeric,"тип numeric","типом numeric"}');
+INSERT INTO public.kontr_quest (idkontr_quest, question, right_answer) VALUES (10, 'За что отвечает оператор ::?', '{"приведение типов","за привеление типов"}');
+
+
+--
+-- TOC entry 3092 (class 0 OID 18006)
+-- Dependencies: 204
+-- Data for Name: kontr_stat; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+
+
+--
+-- TOC entry 3094 (class 0 OID 18013)
+-- Dependencies: 206
+-- Data for Name: lab_query; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO public.lab_query (idlab_query, question, right_query, need_this) VALUES (5, 'Вставьте строку с col_2=''lab'', col_3=1.01, col_4=''1010'', только вещественное число в виде строки с приведения к real', 'INSERT INTO prog_table(col_1, col_2, col_3, col_4)  values(6, ''lab'', ''1.01''::real, b''1010'');', '{''1.01''::real,real''1.01''}');
+INSERT INTO public.lab_query (idlab_query, question, right_query, need_this) VALUES (1, 'Введите в первой строчке в битовое-поле (col_4) значение число 10 в 16-ом виде', 'UPDATE prog_table SET col_4=x''a'' WHERE col_1=1;', '{col_4=x''a'',"\"col_4\"=x''a''"}');
+INSERT INTO public.lab_query (idlab_query, question, right_query, need_this) VALUES (3, 'Замените в последней строчке col_2 на слово data в Unicode (''d\0061t\+000061''), заменив \ на !', 'UPDATE prog_table SET col_2=U&''d!0061t!+000061'' UESCAPE ''!'' WHERE col_1=4;', '{col_2=u&''d!0061t!+000061''uescape''!'',"\"col_2\"=u&''d!0061t!+000061''uescape''!''"}');
+INSERT INTO public.lab_query (idlab_query, question, right_query, need_this) VALUES (4, 'Замените во второй строчек col_2 на food''bar', 'UPDATE prog_table SET col_2=''food''''bar'' WHERE col_1=1;', '{col_2=''food''bar'',"\"col_2\"=''food''bar''"}');
+INSERT INTO public.lab_query (idlab_query, question, right_query, need_this) VALUES (2, 'Вставте строчку col_2 = ''data'', col_3 = 0.001 (со структурой .#####) и col_4 = 10', 'INSERT INTO prog_table(col_1, col_2, col_3, col_4) values(5, ''data'', .001, b''1010'');', '{(.001,",.001"}');
+
+
+--
+-- TOC entry 3096 (class 0 OID 18021)
+-- Dependencies: 208
+-- Data for Name: lab_stat; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+
+
+--
+-- TOC entry 3098 (class 0 OID 18028)
+-- Dependencies: 210
+-- Data for Name: prog_table; Type: TABLE DATA; Schema: public; Owner: lab_work
+--
+
+INSERT INTO public.prog_table (col_1, col_2, col_3, col_4) VALUES (1, 'col_2', 1, B'1001');
+INSERT INTO public.prog_table (col_1, col_2, col_3, col_4) VALUES (2, 'col_2', 1, B'1001');
+INSERT INTO public.prog_table (col_1, col_2, col_3, col_4) VALUES (3, 'col_2', 1, B'1001');
+INSERT INTO public.prog_table (col_1, col_2, col_3, col_4) VALUES (4, 'col_2', 1, B'1001');
+
+
+--
+-- TOC entry 3100 (class 0 OID 18036)
+-- Dependencies: 212
+-- Data for Name: query_stat; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+
+
+--
+-- TOC entry 3102 (class 0 OID 18045)
+-- Dependencies: 214
+-- Data for Name: quest_stat; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+
+
+--
+-- TOC entry 3104 (class 0 OID 18054)
+-- Dependencies: 216
+-- Data for Name: student; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO public.student (idstudent, password, "FIO") VALUES (123, '123', 'студент №1');
+
+
+--
+-- TOC entry 3105 (class 0 OID 18060)
+-- Dependencies: 217
+-- Data for Name: test_ex; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO public.test_ex (idtest_ex, question, variants, right_answers) VALUES (1, 'Результатом запроса (SELECT `foo` `bar`) будет?', '{foobar,"ошибка синтактиса","`foo` `bar`",foo`bar}', '{2}');
+INSERT INTO public.test_ex (idtest_ex, question, variants, right_answers) VALUES (2, 'Что означает символ `\n`?', '{табуляцию,"возврат каретки","перенос строки"}', '{3}');
+INSERT INTO public.test_ex (idtest_ex, question, variants, right_answers) VALUES (3, 'В каком виде могут быть представлены числовые константы?', '{#####,#####.[#####][e[+-]#####],[#####].#####[e[+-]#####],#####e[+-]#####,#####[e[+-]#####].[#####]}', '{1,2,3,4}');
+INSERT INTO public.test_ex (idtest_ex, question, variants, right_answers) VALUES (4, 'Каким образом можно оформлять комментарии?', '{"// #####","-- #####","/* ##### */","# #####"}', '{2,3}');
+INSERT INTO public.test_ex (idtest_ex, question, variants, right_answers) VALUES (5, 'какие из представленных строк подходят для Идентификаторам и ключевым словам?', '{foobar,Фубар,__Ф_у_б_а_р,$ФУБАР}', '{1,2,3}');
+
+
+--
+-- TOC entry 3107 (class 0 OID 18068)
+-- Dependencies: 219
+-- Data for Name: test_stat; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+
+
+--
+-- TOC entry 3109 (class 0 OID 18075)
+-- Dependencies: 221
+-- Data for Name: user_table; Type: TABLE DATA; Schema: public; Owner: lab_work
+--
+
+INSERT INTO public.user_table (col_1, col_2, col_3, col_4) VALUES (1, 'col_2', 1, B'1001');
+INSERT INTO public.user_table (col_1, col_2, col_3, col_4) VALUES (2, 'col_2', 1, B'1001');
+INSERT INTO public.user_table (col_1, col_2, col_3, col_4) VALUES (3, 'col_2', 1, B'1001');
+INSERT INTO public.user_table (col_1, col_2, col_3, col_4) VALUES (4, 'col_2', 1, B'1001');
+
+
+--
+-- TOC entry 3138 (class 0 OID 0)
+-- Dependencies: 201
+-- Name: ex_stat_idex_stat_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.ex_stat_idex_stat_seq', 1, false);
+
+
+--
+-- TOC entry 3139 (class 0 OID 0)
+-- Dependencies: 203
+-- Name: kontr_quest_idkontr_quest_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.kontr_quest_idkontr_quest_seq', 10, true);
+
+
+--
+-- TOC entry 3140 (class 0 OID 0)
+-- Dependencies: 205
+-- Name: kontr_stat_idkontr_stat_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.kontr_stat_idkontr_stat_seq', 1, false);
+
+
+--
+-- TOC entry 3141 (class 0 OID 0)
+-- Dependencies: 207
+-- Name: lab_query_idlab_query_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.lab_query_idlab_query_seq', 5, true);
+
+
+--
+-- TOC entry 3142 (class 0 OID 0)
+-- Dependencies: 209
+-- Name: lab_stat_idlab_stat_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.lab_stat_idlab_stat_seq', 1, false);
+
+
+--
+-- TOC entry 3143 (class 0 OID 0)
+-- Dependencies: 211
+-- Name: prog_table_col_1_seq; Type: SEQUENCE SET; Schema: public; Owner: lab_work
+--
+
+SELECT pg_catalog.setval('public.prog_table_col_1_seq', 4, true);
+
+
+--
+-- TOC entry 3144 (class 0 OID 0)
+-- Dependencies: 213
+-- Name: query_stat_idquery_stat_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.query_stat_idquery_stat_seq', 1, false);
+
+
+--
+-- TOC entry 3145 (class 0 OID 0)
+-- Dependencies: 215
+-- Name: quest_stat_idquest_stat_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.quest_stat_idquest_stat_seq', 1, false);
+
+
+--
+-- TOC entry 3146 (class 0 OID 0)
+-- Dependencies: 218
+-- Name: test_ex_idtest_ex_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.test_ex_idtest_ex_seq', 5, true);
+
+
+--
+-- TOC entry 3147 (class 0 OID 0)
+-- Dependencies: 220
+-- Name: test_stat_idtest_stat_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.test_stat_idtest_stat_seq', 1, false);
+
+
+--
+-- TOC entry 3148 (class 0 OID 0)
+-- Dependencies: 222
+-- Name: user_table_col_1_seq; Type: SEQUENCE SET; Schema: public; Owner: lab_work
+--
+
+SELECT pg_catalog.setval('public.user_table_col_1_seq', 4, true);
+
+
+--
+-- TOC entry 2922 (class 2606 OID 18095)
+-- Name: kontr_quest kontr_quest_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.kontr_quest
+    ADD CONSTRAINT kontr_quest_pkey PRIMARY KEY (idkontr_quest);
+
+
+--
+-- TOC entry 2924 (class 2606 OID 18097)
+-- Name: kontr_stat kontr_stat_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.kontr_stat
+    ADD CONSTRAINT kontr_stat_pkey PRIMARY KEY (idkontr_stat);
+
+
+--
+-- TOC entry 2926 (class 2606 OID 18099)
+-- Name: lab_query lab_query_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.lab_query
+    ADD CONSTRAINT lab_query_pkey PRIMARY KEY (idlab_query);
+
+
+--
+-- TOC entry 2928 (class 2606 OID 18101)
+-- Name: lab_stat lab_stat_pkey1; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.lab_stat
+    ADD CONSTRAINT lab_stat_pkey1 PRIMARY KEY (idlab_stat);
+
+
+--
+-- TOC entry 2930 (class 2606 OID 18103)
+-- Name: prog_table prog_table_pkey; Type: CONSTRAINT; Schema: public; Owner: lab_work
+--
+
+ALTER TABLE ONLY public.prog_table
+    ADD CONSTRAINT prog_table_pkey PRIMARY KEY (col_1);
+
+
+--
+-- TOC entry 2932 (class 2606 OID 18105)
+-- Name: query_stat query_stat_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.query_stat
+    ADD CONSTRAINT query_stat_pkey PRIMARY KEY (idquery_stat);
+
+
+--
+-- TOC entry 2934 (class 2606 OID 18107)
+-- Name: quest_stat quest_stat_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.quest_stat
+    ADD CONSTRAINT quest_stat_pkey PRIMARY KEY (idquest_stat);
+
+
+--
+-- TOC entry 2936 (class 2606 OID 18109)
+-- Name: student student_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.student
+    ADD CONSTRAINT student_pkey PRIMARY KEY (idstudent);
+
+
+--
+-- TOC entry 2914 (class 2606 OID 18110)
+-- Name: test_ex test_ex_check; Type: CHECK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE public.test_ex
+    ADD CONSTRAINT test_ex_check CHECK ((array_length(right_answers, 1) < array_length(variants, 1))) NOT VALID;
+
+
+--
+-- TOC entry 2938 (class 2606 OID 18112)
+-- Name: test_ex test_ex_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.test_ex
+    ADD CONSTRAINT test_ex_pkey PRIMARY KEY (idtest_ex);
+
+
+--
+-- TOC entry 2920 (class 2606 OID 18114)
+-- Name: ex_stat test_stat_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.ex_stat
+    ADD CONSTRAINT test_stat_pkey PRIMARY KEY (idex_stat);
+
+
+--
+-- TOC entry 2940 (class 2606 OID 18116)
+-- Name: test_stat test_stat_pkey1; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.test_stat
+    ADD CONSTRAINT test_stat_pkey1 PRIMARY KEY (idtest_stat);
+
+
+--
+-- TOC entry 2942 (class 2606 OID 18118)
+-- Name: user_table user_table_pkey; Type: CONSTRAINT; Schema: public; Owner: lab_work
+--
+
+ALTER TABLE ONLY public.user_table
+    ADD CONSTRAINT user_table_pkey PRIMARY KEY (col_1);
+
+
+--
+-- TOC entry 2953 (class 2620 OID 18119)
+-- Name: kontr_stat create_kontr; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER create_kontr AFTER INSERT ON public.kontr_stat FOR EACH ROW EXECUTE FUNCTION public.add_quest_to_kontr();
+
+
+--
+-- TOC entry 2954 (class 2620 OID 18120)
+-- Name: lab_stat create_lab; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER create_lab AFTER INSERT ON public.lab_stat FOR EACH ROW EXECUTE FUNCTION public.add_query_to_lab();
+
+
+--
+-- TOC entry 2957 (class 2620 OID 18121)
+-- Name: test_stat create_test; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER create_test AFTER INSERT ON public.test_stat FOR EACH ROW EXECUTE FUNCTION public.add_ex_to_test();
+
+
+--
+-- TOC entry 2956 (class 2620 OID 18122)
+-- Name: quest_stat kontr_answer_init; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER kontr_answer_init AFTER UPDATE ON public.quest_stat FOR EACH ROW EXECUTE FUNCTION public.kontr_rating_sum();
+
+
+--
+-- TOC entry 2955 (class 2620 OID 18123)
+-- Name: query_stat lab_answer_init; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER lab_answer_init AFTER UPDATE ON public.query_stat FOR EACH ROW EXECUTE FUNCTION public.lab_rating_sum();
+
+
+--
+-- TOC entry 2952 (class 2620 OID 18124)
+-- Name: ex_stat test_answer_init; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER test_answer_init AFTER UPDATE ON public.ex_stat FOR EACH ROW EXECUTE FUNCTION public.test_rating_sum();
+
+
+--
+-- TOC entry 2943 (class 2606 OID 18125)
+-- Name: ex_stat ex_stat_idtest_ex_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.ex_stat
+    ADD CONSTRAINT ex_stat_idtest_ex_fkey FOREIGN KEY (idtest_ex) REFERENCES public.test_ex(idtest_ex);
+
+
+--
+-- TOC entry 2944 (class 2606 OID 18130)
+-- Name: ex_stat ex_stat_idtest_stat_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.ex_stat
+    ADD CONSTRAINT ex_stat_idtest_stat_fkey FOREIGN KEY (idtest_stat) REFERENCES public.test_stat(idtest_stat);
+
+
+--
+-- TOC entry 2945 (class 2606 OID 18135)
+-- Name: kontr_stat kontr_stat_idstudent_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.kontr_stat
+    ADD CONSTRAINT kontr_stat_idstudent_fkey FOREIGN KEY (idstudent) REFERENCES public.student(idstudent);
+
+
+--
+-- TOC entry 2946 (class 2606 OID 18140)
+-- Name: lab_stat lab_stat_idstudent_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.lab_stat
+    ADD CONSTRAINT lab_stat_idstudent_fkey FOREIGN KEY (idstudent) REFERENCES public.student(idstudent);
+
+
+--
+-- TOC entry 2947 (class 2606 OID 18145)
+-- Name: query_stat query_stat_idlab_query_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.query_stat
+    ADD CONSTRAINT query_stat_idlab_query_fkey FOREIGN KEY (idlab_query) REFERENCES public.lab_query(idlab_query);
+
+
+--
+-- TOC entry 2949 (class 2606 OID 18150)
+-- Name: quest_stat quest_stat_idkontr_quest_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.quest_stat
+    ADD CONSTRAINT quest_stat_idkontr_quest_fkey FOREIGN KEY (idkontr_quest) REFERENCES public.kontr_quest(idkontr_quest);
+
+
+--
+-- TOC entry 2950 (class 2606 OID 18155)
+-- Name: quest_stat quest_stat_idkontr_stat_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.quest_stat
+    ADD CONSTRAINT quest_stat_idkontr_stat_fkey FOREIGN KEY (idkontr_stat) REFERENCES public.kontr_stat(idkontr_stat);
+
+
+--
+-- TOC entry 2948 (class 2606 OID 18160)
+-- Name: query_stat quest_stat_idlab_stat_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.query_stat
+    ADD CONSTRAINT quest_stat_idlab_stat_fkey FOREIGN KEY (idlab_stat) REFERENCES public.lab_stat(idlab_stat);
+
+
+--
+-- TOC entry 2951 (class 2606 OID 18165)
+-- Name: test_stat test_stat_idstudent_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.test_stat
+    ADD CONSTRAINT test_stat_idstudent_fkey FOREIGN KEY (idstudent) REFERENCES public.student(idstudent);
+
+
+--
+-- TOC entry 3120 (class 0 OID 0)
+-- Dependencies: 206
+-- Name: TABLE lab_query; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.lab_query TO lab_work;
+
+
+--
+-- TOC entry 3122 (class 0 OID 0)
+-- Dependencies: 207
+-- Name: SEQUENCE lab_query_idlab_query_seq; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT SELECT ON SEQUENCE public.lab_query_idlab_query_seq TO lab_work;
+
+
+--
+-- TOC entry 3123 (class 0 OID 0)
+-- Dependencies: 208
+-- Name: TABLE lab_stat; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.lab_stat TO lab_work;
+
+
+--
+-- TOC entry 3125 (class 0 OID 0)
+-- Dependencies: 209
+-- Name: SEQUENCE lab_stat_idlab_stat_seq; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT SELECT,UPDATE ON SEQUENCE public.lab_stat_idlab_stat_seq TO lab_work;
+
+
+--
+-- TOC entry 3126 (class 0 OID 0)
+-- Dependencies: 210
+-- Name: TABLE prog_table; Type: ACL; Schema: public; Owner: lab_work
+--
+
+REVOKE ALL ON TABLE public.prog_table FROM lab_work;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.prog_table TO lab_work;
+GRANT ALL ON TABLE public.prog_table TO postgres;
+
+
+--
+-- TOC entry 3128 (class 0 OID 0)
+-- Dependencies: 211
+-- Name: SEQUENCE prog_table_col_1_seq; Type: ACL; Schema: public; Owner: lab_work
+--
+
+GRANT ALL ON SEQUENCE public.prog_table_col_1_seq TO postgres;
+
+
+--
+-- TOC entry 3129 (class 0 OID 0)
+-- Dependencies: 212
+-- Name: TABLE query_stat; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.query_stat TO lab_work;
+
+
+--
+-- TOC entry 3131 (class 0 OID 0)
+-- Dependencies: 213
+-- Name: SEQUENCE query_stat_idquery_stat_seq; Type: ACL; Schema: public; Owner: postgres
+--
+
+GRANT SELECT,UPDATE ON SEQUENCE public.query_stat_idquery_stat_seq TO lab_work;
+
+
+--
+-- TOC entry 3135 (class 0 OID 0)
+-- Dependencies: 221
+-- Name: TABLE user_table; Type: ACL; Schema: public; Owner: lab_work
+--
+
+REVOKE ALL ON TABLE public.user_table FROM lab_work;
+GRANT SELECT,INSERT,DELETE,UPDATE ON TABLE public.user_table TO lab_work;
+GRANT ALL ON TABLE public.user_table TO postgres;
+
+
+--
+-- TOC entry 3137 (class 0 OID 0)
+-- Dependencies: 222
+-- Name: SEQUENCE user_table_col_1_seq; Type: ACL; Schema: public; Owner: lab_work
+--
+
+GRANT ALL ON SEQUENCE public.user_table_col_1_seq TO postgres;
+
+
+-- Completed on 2021-07-02 00:01:12 +04
+
+--
+-- PostgreSQL database dump complete
+--
+

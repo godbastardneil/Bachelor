@@ -1,0 +1,249 @@
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 13.3 (Debian 13.3-1.pgdg100+1)
+-- Dumped by pg_dump version 13.3 (Debian 13.3-1.pgdg100+1)
+
+-- Started on 2021-07-01 23:53:29 +04
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- TOC entry 2966 (class 1262 OID 17451)
+-- Name: lab_4; Type: DATABASE; Schema: -; Owner: postgres
+--
+
+CREATE DATABASE lab_4 WITH TEMPLATE = template0 ENCODING = 'UTF8' LOCALE = 'ru_RU.UTF-8';
+
+
+ALTER DATABASE lab_4 OWNER TO postgres;
+
+\connect lab_4
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- TOC entry 200 (class 1259 OID 17452)
+-- Name: test_numeric; Type: TABLE; Schema: public; Owner: user
+--
+
+CREATE TABLE public.test_numeric (
+    measurement numeric(5,2),
+    description text
+);
+
+
+ALTER TABLE public.test_numeric OWNER TO "user";
+
+--
+-- TOC entry 201 (class 1259 OID 17458)
+-- Name: test_numeric2; Type: TABLE; Schema: public; Owner: user
+--
+
+CREATE TABLE public.test_numeric2 (
+    measurement numeric,
+    description text
+);
+
+
+ALTER TABLE public.test_numeric2 OWNER TO "user";
+
+--
+-- TOC entry 202 (class 1259 OID 17464)
+-- Name: test_serial; Type: TABLE; Schema: public; Owner: user
+--
+
+CREATE TABLE public.test_serial (
+    id_ integer NOT NULL,
+    name text
+);
+
+
+ALTER TABLE public.test_serial OWNER TO "user";
+
+--
+-- TOC entry 203 (class 1259 OID 17470)
+-- Name: test_serial2; Type: TABLE; Schema: public; Owner: user
+--
+
+CREATE TABLE public.test_serial2 (
+    id integer NOT NULL,
+    name text
+);
+
+
+ALTER TABLE public.test_serial2 OWNER TO "user";
+
+--
+-- TOC entry 204 (class 1259 OID 17476)
+-- Name: test_serial2_id_seq; Type: SEQUENCE; Schema: public; Owner: user
+--
+
+CREATE SEQUENCE public.test_serial2_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.test_serial2_id_seq OWNER TO "user";
+
+--
+-- TOC entry 2967 (class 0 OID 0)
+-- Dependencies: 204
+-- Name: test_serial2_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: user
+--
+
+ALTER SEQUENCE public.test_serial2_id_seq OWNED BY public.test_serial2.id;
+
+
+--
+-- TOC entry 205 (class 1259 OID 17478)
+-- Name: test_serial_id__seq; Type: SEQUENCE; Schema: public; Owner: user
+--
+
+CREATE SEQUENCE public.test_serial_id__seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.test_serial_id__seq OWNER TO "user";
+
+--
+-- TOC entry 2968 (class 0 OID 0)
+-- Dependencies: 205
+-- Name: test_serial_id__seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: user
+--
+
+ALTER SEQUENCE public.test_serial_id__seq OWNED BY public.test_serial.id_;
+
+
+--
+-- TOC entry 2821 (class 2604 OID 17480)
+-- Name: test_serial id_; Type: DEFAULT; Schema: public; Owner: user
+--
+
+ALTER TABLE ONLY public.test_serial ALTER COLUMN id_ SET DEFAULT nextval('public.test_serial_id__seq'::regclass);
+
+
+--
+-- TOC entry 2822 (class 2604 OID 17481)
+-- Name: test_serial2 id; Type: DEFAULT; Schema: public; Owner: user
+--
+
+ALTER TABLE ONLY public.test_serial2 ALTER COLUMN id SET DEFAULT nextval('public.test_serial2_id_seq'::regclass);
+
+
+--
+-- TOC entry 2955 (class 0 OID 17452)
+-- Dependencies: 200
+-- Data for Name: test_numeric; Type: TABLE DATA; Schema: public; Owner: user
+--
+
+INSERT INTO public.test_numeric (measurement, description) VALUES (999.99, 'Точность 20 знаков, масштаб 10 знаков');
+INSERT INTO public.test_numeric (measurement, description) VALUES (99.99, '');
+INSERT INTO public.test_numeric (measurement, description) VALUES (999.99, '');
+
+
+--
+-- TOC entry 2956 (class 0 OID 17458)
+-- Dependencies: 201
+-- Data for Name: test_numeric2; Type: TABLE DATA; Schema: public; Owner: user
+--
+
+INSERT INTO public.test_numeric2 (measurement, description) VALUES (1234567890.0987654321, 'Точность 20 знаков, масштаб 10 знаков');
+INSERT INTO public.test_numeric2 (measurement, description) VALUES (1.5, 'Точность 2 знака, масштаб 1 знак');
+INSERT INTO public.test_numeric2 (measurement, description) VALUES (0.12345678901234567890, 'Точность 21 знак, масштаб 20 знаков');
+INSERT INTO public.test_numeric2 (measurement, description) VALUES (1234567890, 'Точность 10 знаков, масштаб 0 знаков (целое число)');
+
+
+--
+-- TOC entry 2957 (class 0 OID 17464)
+-- Dependencies: 202
+-- Data for Name: test_serial; Type: TABLE DATA; Schema: public; Owner: user
+--
+
+INSERT INTO public.test_serial (id_, name) VALUES (1, 'Вишневая');
+INSERT INTO public.test_serial (id_, name) VALUES (2, 'Грушевая');
+INSERT INTO public.test_serial (id_, name) VALUES (3, 'Абрикосовая');
+INSERT INTO public.test_serial (id_, name) VALUES (7, 'Прохладная');
+INSERT INTO public.test_serial (id_, name) VALUES (4, 'Тенистая');
+
+
+--
+-- TOC entry 2958 (class 0 OID 17470)
+-- Dependencies: 203
+-- Data for Name: test_serial2; Type: TABLE DATA; Schema: public; Owner: user
+--
+
+INSERT INTO public.test_serial2 (id, name) VALUES (1, 'Вишневая');
+INSERT INTO public.test_serial2 (id, name) VALUES (2, 'Прохладная');
+INSERT INTO public.test_serial2 (id, name) VALUES (3, 'Грушевая');
+INSERT INTO public.test_serial2 (id, name) VALUES (5, 'Абрикосовая');
+INSERT INTO public.test_serial2 (id, name) VALUES (6, 'Тенистая');
+INSERT INTO public.test_serial2 (id, name) VALUES (7, 'Магистральная');
+INSERT INTO public.test_serial2 (id, name) VALUES (8, 'Татищева');
+
+
+--
+-- TOC entry 2969 (class 0 OID 0)
+-- Dependencies: 204
+-- Name: test_serial2_id_seq; Type: SEQUENCE SET; Schema: public; Owner: user
+--
+
+SELECT pg_catalog.setval('public.test_serial2_id_seq', 8, true);
+
+
+--
+-- TOC entry 2970 (class 0 OID 0)
+-- Dependencies: 205
+-- Name: test_serial_id__seq; Type: SEQUENCE SET; Schema: public; Owner: user
+--
+
+SELECT pg_catalog.setval('public.test_serial_id__seq', 4, true);
+
+
+--
+-- TOC entry 2824 (class 2606 OID 17483)
+-- Name: test_serial2 test_serial2_pkey; Type: CONSTRAINT; Schema: public; Owner: user
+--
+
+ALTER TABLE ONLY public.test_serial2
+    ADD CONSTRAINT test_serial2_pkey PRIMARY KEY (id);
+
+
+-- Completed on 2021-07-01 23:53:29 +04
+
+--
+-- PostgreSQL database dump complete
+--
+

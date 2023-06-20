@@ -1,0 +1,17 @@
+# depslib dependency file v1.0
+1563127562 source:c:\users\user\desktop\gdfg\c++\lab188\main.cpp
+	<iostream>
+	<string>
+	<vector>
+	<stdio.h>
+	<stdlib.h>
+
+1563127562 
+
+1565945024 source:/home/neil/Рабочий стол/pic/c++/lab188/main.cpp
+	<iostream>
+	<string>
+	<vector>
+	<stdio.h>
+	<stdlib.h>
+

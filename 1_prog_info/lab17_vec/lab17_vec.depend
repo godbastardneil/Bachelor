@@ -1,0 +1,8 @@
+# depslib dependency file v1.0
+1562312331 source:c:\users\user\desktop\gdfg\c++\lab17_vec\main.cpp
+	<iostream>
+	<fstream>
+	<ctime>
+	<vector>
+	<windows.h>
+

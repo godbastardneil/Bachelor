@@ -1,0 +1,7 @@
+# depslib dependency file v1.0
+1562251282 source:c:\users\user\desktop\gdfg\c++\lab17_arr\main.cpp
+	<iostream>
+	<fstream>
+	<ctime>
+	<windows.h>
+

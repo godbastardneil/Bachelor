@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ru">
+    <head>
+        <meta charset="UTF-8">
+        <script src="/socket.io/socket.io.js"></script>
+        <script src="/js/cust.js"></script>
+
+        <title>Лаба_12</title>
+    </head>
+
+    <body>
+        <div class="header">
+            <p class="header_text" id="header_to_main"> Лаба_12</p>
+        </div>
+
+        <div class = "s_searсh">
+
+            <form>
+                <div id="teoty_out_buttons" class="button" style="margin-bottom: 1%; justify-content: space-around;">
+                    <button type="button" class="button" id="b_product">Продукты</button>
+                </div>
+                <div id="teoty_out_buttons" class="button" style="margin-bottom: 1%; justify-content: space-around;">
+                    <button type="button" class="button" id="b_deal">Сдекли</button>
+                </div>
+                <p id="kol_t">Поиск: </p>
+                    <input type="text" id="searсh_in" value=""><Br>
+
+                    <input type="radio" name="searсh_rad" value="jio_r">ФИО<Br>
+                    <input type="radio" name="searсh_rad" value="opt_r">Телефон<Br>
+                    <input type="radio" name="searсh_rad" value="roz_r">Адресс<Br>
+
+                <div id="teoty_out_buttons" class="button" style="margin-bottom: 1%; justify-content: space-around;">
+                    <button type="button" class="button" id="b_searсh">Поиск</button>
+                </div>
+            </form>
+
+            <div id="searсh_dprod_info">
+                <table id="table_of_searсh" border="1">
+                    <thead>
+                        <tr>
+                            <th>ФИО</th>
+                            <th>Телефон</th>
+                            <th>Адресс</th>
+                        <tr>
+                    </thead>
+                    <tbody class="tbody-mp"></tbody>
+                </table>
+            </div>
+
+        </div>
+
+        <div class = "main">
+
+            <form>
+                <p id="fio_t">ФИО: </p>
+                    <input type="text" id="fio_in" value=""><Br>
+
+                <p id="phone_t">Телефон: </p>
+                    <input type="text" id="phone_in" value=""><Br>
+
+                <p id="addr_t">Адресс: </p>
+                    <input type="text" id="addr_in" value=""><Br>
+
+                <div id="teoty_out_buttons" class="button" style="margin-bottom: 1%; justify-content: space-around;">
+                    <button type="button" class="button" id="b_include">Добавить</button>
+                </div>
+            </form>
+
+            <div id="main_customer_info">
+                <table id="table_of_customer" border="1">
+                    <thead>
+                        <tr>
+                            <th>ФИО</th>
+                            <th>Телефон</th>
+                            <th>Адресс</th>
+                        <tr>
+                    </thead>
+                    <tbody class="tbody-mp"></tbody>
+                </table>
+            </div>
+
+        </div>
+    </body>
+</html>

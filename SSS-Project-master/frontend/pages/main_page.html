@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/all.min.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="js/jquery-3.5.1.min.js"></script>
+    <script src="js/jquery.tablesorter.min.js"></script>
+    <script src="js/scripts_mp.js"></script>
+
+    <title>Начальная страница - список заявок</title>
+</head>
+
+<body>
+    <div class="header mt-3 fnt">
+        <p> LOGISTICS MANAGEMENT SYSTEM </p>
+        <div id="current_date_time_block"></div>
+    </div>
+
+    <form>
+        <div class="inner-addon left-addon">
+            <i class="fas fa-search"></i>
+            <input type="text" id="search-edit" class="form-control fnt" placeholder="Поиск заявки (прим., 20-10-1)">
+        </div>
+
+    </form>
+
+    <div class="margin-block" />
+
+    <form>
+        <div class="form-row sort-filter text-center" id="filter-priority">
+            <div class="col-auto my-1" style="display: flex;">
+                <label class="mr-sm-2 text-nowrap text-sm-left d-flex  align-items-center" style="margin: 0" for="inlineFormCustomSelect">Приоритет:</label>
+                <select class="custom-select mr-sm-2 fnt" id="inlineFormCustomSelect">
+                    <option value="1">любой важности</option>
+                    <option value="2" class="priority-high">только высокий</option>
+                    <option value="3" class="priority-mid">только средний</option>
+                    <option value="4" class="priority-low">только низкий</option>
+                </select>
+            </div>
+            <!-- отступ -->
+            <p style="width: 63%"></p>
+            <label class="mr-sm-2 text-nowrap text-sm-left d-flex align-items-center ju" style="margin: 0" for="inlineFormCustomSelect">Дата:
+                <input type="date" id="date" name="trip-start" class="fnt mr-sm-2 custom-select date-picker" value="2020-10-31" min="2018-01-01" max="2021-12-31" />
+            </label>
+            <button type="button" id="showAllOrders" class="btn btn-primary" data-toggle="button" aria-pressed="false" autocomplete="off">показать все</button>
+        </div>
+    </form>
+    <div class="margin-block">
+        <form>
+            <div class="table-scroll app-back-panel-mp hovertable">
+                <table class="table table_mp table-borderless" id="app_table">
+                    <thead>
+                        <tr align="center" class="nohover">
+                            <th class="th-mp" scope="col"><span class="fas fa-sort-amount-down-alt" id="sortFigSt" style="visibility: hidden"></span>Статус</th>
+                            <th class="th-mp" scope="col"><span class="fas fa-sort-amount-down-alt" id="sortFigN" style="visibility: hidden"></span> № заявки</th>
+                            <th class="th-mp" scope="col"><span class="fas fa-sort-amount-down-alt" id="sortFigAb" style="visibility: hidden"></span>Описание работ</th>
+                            <th class="th-mp" scope="col"><span class="fas fa-sort-amount-down-alt" id="sortFigPl" style="visibility: hidden"></span>Место работы</th>
+                            <th class="th-mp" scope="col"><span class="fas fa-sort-amount-down-alt" id="sortFigTi" style="visibility: hidden"></span>Время подачи</th>
+                            <th class="th-mp" scope="col"><span class="fas fa-sort-amount-down-alt" id="sortFigMan" style="visibility: hidden"></span>Цех</th>
+                        </tr>
+                    </thead>
+                    <tbody class="tbody-mp">
+                    </tbody>
+                </table>
+            </div>
+
+        </form>
+        <div id="troubleToast"> </div>
+    </div>
+</body>
+
+</html>

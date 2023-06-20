@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ru">
+    <head>
+        <meta charset="UTF-8">
+        <script src="/socket.io/socket.io.js"></script>
+        <script src="/js/main.js"></script>
+
+        <title>Лаба_11</title>
+    </head>
+
+    <body>
+        <div class="header">
+            <p class="header_text" id="header_to_main"> Лаба_11</p>
+        </div>
+
+        <div class = "s_searсh">
+
+            <form>
+                <p id="kol_t">Поиск (Сумма): </p>
+                    <input type="numder" id="sum_in" value=""><Br>
+
+                <p id="date_t">Дата1: </p>
+                    <input type="date" id="date1_in" value=""><Br>
+                <p id="date_t">Дата2: </p>
+                    <input type="date" id="date2_in" value=""><Br>
+
+                <p id="kol_t">Поиск (ФИО): </p>
+                    <p>
+                        <select multiple id="fio_in">
+                            <option value=""></option>
+                       </select>
+                   </p>
+
+                <p id="kol_t">Поиск (Название): </p>
+                    <p>
+                        <select multiple id="title_in">
+                            <option value=""></option>
+                       </select>
+                   </p>
+
+
+                    <input type="radio" name="searсh_rad" value="sum_r">Сумма<Br>
+                    <input type="radio" name="searсh_rad" value="date_r">Дата<Br>
+                    <input type="radio" name="searсh_rad" value="fio_r">ФИО<Br>
+                    <input type="radio" name="searсh_rad" value="title_r">Название<Br>
+
+                <div id="teoty_out_buttons" class="button" style="margin-bottom: 1%; justify-content: space-around;">
+                    <button type="button" class="button" id="b_searсh">Поиск</button>
+                </div>
+            </form>
+
+            <div id="searсh_zakaz_info">
+                <table id="table_of_searсh" border="1">
+                    <thead>
+                        <tr>
+                            <th>Cумма</th>
+                            <th>Дата</th>
+                            <th>ФИО</th>
+                            <th>Название</th>
+                        <tr>
+                    </thead>
+                    <tbody class="tbody-mp"></tbody>
+                </table>
+            </div>
+
+        </div>
+
+        </div>
+    </body>
+</html>

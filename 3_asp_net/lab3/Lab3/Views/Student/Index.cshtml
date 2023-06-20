@@ -1,0 +1,39 @@
+﻿@model IEnumerable<Lab3.Models.StudentModel>
+@{
+    ViewData["Title"] = "Группа - " + @ViewBag.name;
+}
+
+<div class="text-center">
+    <h1 class="display-4">Группа - @ViewBag.name</h1>
+    <form method="post">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Номер зачётки</th>
+                    <th>ФИО</th>
+                    <th>Признак старосты</th>
+                    <th>Действие</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var stud in Model)
+                {
+                        <tr>
+                            <td scope="row">@stud.idstudent</td>
+                            <td class="w-100">@stud.FIO</td>
+                            <td>@stud.headman_sign</td>
+                            <td nowrap>
+                                <a class="btn btn-outline-primary" asp-controller="Student" asp-action="Update"
+                            asp-route-id="@stud.idstudent">Изменить</a> /
+                                <input class="btn btn-danger" type="submit" value="Удалить" asp-controller="Student"
+                            asp-action="Delete" asp-route-id="@stud.idstudent">
+                            </td>
+                        </tr>
+                }
+            </tbody>
+        </table>
+    </form>
+        <a class="btn btn-outline-primary" asp-controller="Student" asp-action="Create"
+    asp-route-id="@ViewBag.idgroup">Добавить нового студента</a>
+    <a class="btn btn-danger" asp-controller="Group" asp-action="Index">Назад</a>
+</div>

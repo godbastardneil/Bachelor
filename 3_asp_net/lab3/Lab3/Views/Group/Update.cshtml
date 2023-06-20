@@ -1,0 +1,16 @@
+@model Lab3.Models.GroupModel
+@{
+    ViewData["Title"] = "Редактирование группы";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Редактирование группы</h1>
+    <form method="post" class="text-left">
+        <input type="text" name="idgroup" id="idgroup" value="@Model.idgroup" hidden>
+        <p>
+            <label for="name"><b>Название:</b></label><br>
+            <input type="text" name="name" id="name" value="@Model.name" class="w-100" required>
+        </p>
+        <input type="submit" value="Сохранить">
+    </form>
+</div>

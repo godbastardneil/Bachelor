@@ -1,0 +1,681 @@
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 13.3 (Debian 13.3-1.pgdg100+1)
+-- Dumped by pg_dump version 13.3 (Debian 13.3-1.pgdg100+1)
+
+-- Started on 2021-07-01 23:57:11 +04
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- TOC entry 2995 (class 1262 OID 17118)
+-- Name: lab_12_3; Type: DATABASE; Schema: -; Owner: postgres
+--
+
+CREATE DATABASE lab_12_3 WITH TEMPLATE = template0 ENCODING = 'UTF8' LOCALE = 'ru_RU.UTF-8';
+
+
+ALTER DATABASE lab_12_3 OWNER TO postgres;
+
+\connect lab_12_3
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- TOC entry 208 (class 1255 OID 17119)
+-- Name: check_fix(); Type: PROCEDURE; Schema: public; Owner: postgres
+--
+
+CREATE PROCEDURE public.check_fix()
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+	charack record; met_pc record; idos_pc integer; mem integer; ram integer;
+BEGIN
+	FOR met_pc IN (SELECT * FROM computer) LOOP
+		idos_pc := (SELECT idos FROM program WHERE idprogram =
+						(SELECT idprogram FROM instolation WHERE idcomputer = met_pc.idcomputer ORDER BY data, idprogram ASC LIMIT 1));
+		mem := (SELECT SUM(hdd_space) FROM program WHERE idprogram IN
+			(SELECT idprogram FROM instolation WHERE idcomputer = met_pc.idcomputer));
+		ram := (SELECT SUM(resident_ram_space+run_ram_space) FROM program WHERE idprogram IN
+			(SELECT idprogram FROM instolation WHERE idcomputer = met_pc.idcomputer));
+		WHILE (mem > met_pc.hdd_size OR ram > met_pc.ram_size) LOOP
+			DELETE FROM instolation WHERE idprogram =
+				(SELECT idprogram FROM instolation WHERE idcomputer = met_pc.idcomputer ORDER BY data, idprogram DESC LIMIT 1);
+			mem := (SELECT SUM(hdd_space) FROM program WHERE idprogram IN
+				(SELECT idprogram FROM instolation WHERE idcomputer = met_pc.idcomputer));
+			ram := (SELECT SUM(resident_ram_space+run_ram_space) FROM program WHERE idprogram IN
+				(SELECT idprogram FROM instolation WHERE idcomputer = met_pc.idcomputer));	
+		END LOOP;
+		FOR charack IN (SELECT * FROM program WHERE idprogram IN
+							(SELECT idprogram FROM instolation WHERE idcomputer = met_pc.idcomputer)) LOOP
+			IF (idos_pc <> charack.idos) THEN
+				DELETE FROM instolation WHERE idprogram = charack.idprogram;
+			END IF;
+		END LOOP;
+	END LOOP;
+END;
+$$;
+
+
+ALTER PROCEDURE public.check_fix() OWNER TO postgres;
+
+--
+-- TOC entry 209 (class 1255 OID 17120)
+-- Name: check_for_init(integer, integer); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.check_for_init(idc integer, idpr integer) RETURNS boolean
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+	charack record;
+	met_pc record;
+	idos_pc integer;
+	mem integer;
+	ram integer;
+BEGIN 
+	idos_pc := (SELECT idos FROM program WHERE idprogram = (SELECT idprogram FROM instolation WHERE idc = idcomputer ORDER BY data, idprogram ASC LIMIT 1));
+	SELECT hdd_space, idos, resident_ram_space+run_ram_space as ram_space INTO charack FROM program WHERE idprogram = idpr;
+	
+	IF (idos_pc = charack.idos) THEN
+		SELECT hdd_size, ram_size INTO met_pc FROM computer WHERE idc = idcomputer;
+		mem := (SELECT SUM(hdd_space) FROM program WHERE idprogram IN
+					(SELECT idprogram FROM instolation WHERE idc = idcomputer)) + charack.hdd_space;
+		ram := (SELECT SUM(resident_ram_space+run_ram_space) FROM program WHERE idprogram IN
+					(SELECT idprogram FROM instolation WHERE idc = idcomputer)) + charack.ram_space;
+					
+		IF (mem <= met_pc.hdd_size AND ram <= met_pc.ram_size) THEN
+			RETURN true;
+		END IF;
+	END IF;
+	RETURN false;
+END;
+$$;
+
+
+ALTER FUNCTION public.check_for_init(idc integer, idpr integer) OWNER TO postgres;
+
+--
+-- TOC entry 210 (class 1255 OID 17121)
+-- Name: check_size(integer); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.check_size(idc integer) RETURNS TABLE(idcomputer integer, tittle text, hdd_free real, ram_free real)
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+	charack record;
+	met_pc record;
+BEGIN 
+	SELECT pc.idcomputer, tittle, hdd_size, ram_size INTO met_pc FROM computer pc WHERE idc = pc.idcomputer;
+	SELECT SUM(hdd_space) as hdd_space, SUM(resident_ram_space+run_ram_space) as ram_space
+	INTO charack
+	FROM program
+	WHERE idprogram IN (SELECT idprogram FROM instolation inst WHERE idc = inst.idcomputer);
+	
+	RETURN QUERY (SELECT met_pc.idcomputer, met_pc.tittle, met_pc.hdd_size - charack.hdd_space, met_pc.ram_size - charack.ram_space);
+END;
+$$;
+
+
+ALTER FUNCTION public.check_size(idc integer) OWNER TO postgres;
+
+--
+-- TOC entry 211 (class 1255 OID 17122)
+-- Name: delete_comp(integer); Type: PROCEDURE; Schema: public; Owner: postgres
+--
+
+CREATE PROCEDURE public.delete_comp(idc integer)
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+	DELETE FROM installation WHERE idcomputer = idc;
+	DELETE FROM computer WHERE idcomputer = idc;
+END;
+$$;
+
+
+ALTER PROCEDURE public.delete_comp(idc integer) OWNER TO postgres;
+
+--
+-- TOC entry 217 (class 1255 OID 17123)
+-- Name: delete_init(integer, integer); Type: PROCEDURE; Schema: public; Owner: postgres
+--
+
+CREATE PROCEDURE public.delete_init(idc integer, idp integer)
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+	DELETE FROM installation WHERE idcomputer = idc AND idprogram = idp;
+END;
+$$;
+
+
+ALTER PROCEDURE public.delete_init(idc integer, idp integer) OWNER TO postgres;
+
+--
+-- TOC entry 224 (class 1255 OID 17124)
+-- Name: delete_os(integer); Type: PROCEDURE; Schema: public; Owner: postgres
+--
+
+CREATE PROCEDURE public.delete_os(ido integer)
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+	DELETE FROM installation WHERE idprogram in (select idprogram from program where idos = ido);
+	DELETE FROM program WHERE idos = ido;
+	DELETE FROM os WHERE idos = ido;
+END;
+$$;
+
+
+ALTER PROCEDURE public.delete_os(ido integer) OWNER TO postgres;
+
+--
+-- TOC entry 225 (class 1255 OID 17125)
+-- Name: delete_prog(integer); Type: PROCEDURE; Schema: public; Owner: postgres
+--
+
+CREATE PROCEDURE public.delete_prog(idp integer)
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+	DELETE FROM installation WHERE idprogram = idp;
+	DELETE FROM program WHERE idprogram = idp;
+END;
+$$;
+
+
+ALTER PROCEDURE public.delete_prog(idp integer) OWNER TO postgres;
+
+--
+-- TOC entry 226 (class 1255 OID 17126)
+-- Name: include_computer(text, integer, integer); Type: PROCEDURE; Schema: public; Owner: postgres
+--
+
+CREATE PROCEDURE public.include_computer(pc_name text, hdd integer, ram integer)
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+	INSERT INTO computer (name, hdd_size, ram_size) VALUES (pc_name, hdd, ram);
+END;
+$$;
+
+
+ALTER PROCEDURE public.include_computer(pc_name text, hdd integer, ram integer) OWNER TO postgres;
+
+--
+-- TOC entry 227 (class 1255 OID 17127)
+-- Name: include_os(text); Type: PROCEDURE; Schema: public; Owner: user
+--
+
+CREATE PROCEDURE public.include_os(o_name text)
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+	INSERT INTO os (os_name) VALUES (o_name);
+END;
+$$;
+
+
+ALTER PROCEDURE public.include_os(o_name text) OWNER TO "user";
+
+--
+-- TOC entry 228 (class 1255 OID 17128)
+-- Name: include_program(integer, text, integer, integer, integer); Type: PROCEDURE; Schema: public; Owner: postgres
+--
+
+CREATE PROCEDURE public.include_program(ido integer, p_title text, hdd integer, ram integer, r_ram integer)
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+	if (ido in (select idos from os)) then
+		INSERT INTO program (idos, title, hdd_space, resident_ram_space, run_ram_space) VALUES (ido, p_title, hdd, ram, r_ram);
+    end if;
+END;
+$$;
+
+
+ALTER PROCEDURE public.include_program(ido integer, p_title text, hdd integer, ram integer, r_ram integer) OWNER TO postgres;
+
+--
+-- TOC entry 229 (class 1255 OID 17129)
+-- Name: update_computer(integer, text, integer, integer); Type: PROCEDURE; Schema: public; Owner: postgres
+--
+
+CREATE PROCEDURE public.update_computer(c_id integer, c_name text, hdd integer, ram integer)
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+	UPDATE computer SET name = c_name, hdd_size = hdd, ram_size = ram where idcomputer = c_id;
+END;
+$$;
+
+
+ALTER PROCEDURE public.update_computer(c_id integer, c_name text, hdd integer, ram integer) OWNER TO postgres;
+
+--
+-- TOC entry 230 (class 1255 OID 17130)
+-- Name: update_os(integer, text); Type: PROCEDURE; Schema: public; Owner: postgres
+--
+
+CREATE PROCEDURE public.update_os(o_id integer, o_name text)
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+	UPDATE os SET name = o_name where idos = o_id;
+END;
+$$;
+
+
+ALTER PROCEDURE public.update_os(o_id integer, o_name text) OWNER TO postgres;
+
+--
+-- TOC entry 231 (class 1255 OID 17131)
+-- Name: update_program(integer, integer, text, integer, integer, integer); Type: PROCEDURE; Schema: public; Owner: postgres
+--
+
+CREATE PROCEDURE public.update_program(p_id integer, ido integer, p_title text, hdd integer, ram integer, r_ram integer)
+    LANGUAGE plpgsql
+    AS $$
+DECLARE
+	pc record;
+	mem integer;
+	ram integer;
+BEGIN
+	if (ido in (select idos from os)) then
+		for pc in (select idcomputer, hdd_size, ram_size from instolation where idprogram = p_id) loop
+			mem := (SELECT SUM(hdd_space) FROM program WHERE idprogram IN
+						(SELECT idprogram FROM instolation WHERE pc.idcomputer = idcomputer AND idprogram <> p_id)) + hdd;
+			ram := (SELECT SUM(resident_ram_space+run_ram_space) FROM program WHERE idprogram IN
+						(SELECT idprogram FROM instolation WHERE pc.idcomputer = idcomputer AND idprogram <> p_id)) + (ram+r_ram);
+
+			IF (mem <= pc.hdd_size AND ram <= pc.ram_size) THEN
+				UPDATE program SET idos = ido, title = p_title, hdd_space = hdd, resident_ram_space = ram, run_ram_space = r_ram where idprogram = p_id;
+			END IF;
+		end loop;
+		
+    end if;
+END;
+$$;
+
+
+ALTER PROCEDURE public.update_program(p_id integer, ido integer, p_title text, hdd integer, ram integer, r_ram integer) OWNER TO postgres;
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- TOC entry 200 (class 1259 OID 17132)
+-- Name: computer; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.computer (
+    idcomputer integer NOT NULL,
+    name text,
+    hdd_size real NOT NULL,
+    ram_size real NOT NULL
+);
+
+
+ALTER TABLE public.computer OWNER TO postgres;
+
+--
+-- TOC entry 201 (class 1259 OID 17138)
+-- Name: computer_idcomputer_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.computer_idcomputer_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.computer_idcomputer_seq OWNER TO postgres;
+
+--
+-- TOC entry 2996 (class 0 OID 0)
+-- Dependencies: 201
+-- Name: computer_idcomputer_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.computer_idcomputer_seq OWNED BY public.computer.idcomputer;
+
+
+--
+-- TOC entry 202 (class 1259 OID 17140)
+-- Name: instolation; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.instolation (
+    idinstolation integer NOT NULL,
+    idcomputer integer NOT NULL,
+    idprogram integer NOT NULL,
+    data timestamp without time zone
+);
+
+
+ALTER TABLE public.instolation OWNER TO postgres;
+
+--
+-- TOC entry 203 (class 1259 OID 17143)
+-- Name: instolation_idinstolation_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.instolation_idinstolation_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.instolation_idinstolation_seq OWNER TO postgres;
+
+--
+-- TOC entry 2997 (class 0 OID 0)
+-- Dependencies: 203
+-- Name: instolation_idinstolation_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.instolation_idinstolation_seq OWNED BY public.instolation.idinstolation;
+
+
+--
+-- TOC entry 204 (class 1259 OID 17145)
+-- Name: os; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.os (
+    idos integer NOT NULL,
+    name text
+);
+
+
+ALTER TABLE public.os OWNER TO postgres;
+
+--
+-- TOC entry 205 (class 1259 OID 17151)
+-- Name: os_idos_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.os_idos_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.os_idos_seq OWNER TO postgres;
+
+--
+-- TOC entry 2998 (class 0 OID 0)
+-- Dependencies: 205
+-- Name: os_idos_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.os_idos_seq OWNED BY public.os.idos;
+
+
+--
+-- TOC entry 206 (class 1259 OID 17153)
+-- Name: program; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.program (
+    idprogram integer NOT NULL,
+    idos integer NOT NULL,
+    title text,
+    hdd_space real NOT NULL,
+    resident_ram_space real NOT NULL,
+    run_ram_space real NOT NULL
+);
+
+
+ALTER TABLE public.program OWNER TO postgres;
+
+--
+-- TOC entry 207 (class 1259 OID 17159)
+-- Name: program_idprogram_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.program_idprogram_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.program_idprogram_seq OWNER TO postgres;
+
+--
+-- TOC entry 2999 (class 0 OID 0)
+-- Dependencies: 207
+-- Name: program_idprogram_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.program_idprogram_seq OWNED BY public.program.idprogram;
+
+
+--
+-- TOC entry 2837 (class 2604 OID 17161)
+-- Name: computer idcomputer; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.computer ALTER COLUMN idcomputer SET DEFAULT nextval('public.computer_idcomputer_seq'::regclass);
+
+
+--
+-- TOC entry 2838 (class 2604 OID 17162)
+-- Name: instolation idinstolation; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.instolation ALTER COLUMN idinstolation SET DEFAULT nextval('public.instolation_idinstolation_seq'::regclass);
+
+
+--
+-- TOC entry 2839 (class 2604 OID 17163)
+-- Name: os idos; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.os ALTER COLUMN idos SET DEFAULT nextval('public.os_idos_seq'::regclass);
+
+
+--
+-- TOC entry 2840 (class 2604 OID 17164)
+-- Name: program idprogram; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.program ALTER COLUMN idprogram SET DEFAULT nextval('public.program_idprogram_seq'::regclass);
+
+
+--
+-- TOC entry 2982 (class 0 OID 17132)
+-- Dependencies: 200
+-- Data for Name: computer; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO public.computer (idcomputer, name, hdd_size, ram_size) VALUES (1, 'pc№1', 250, 8);
+INSERT INTO public.computer (idcomputer, name, hdd_size, ram_size) VALUES (2, 'pc№2', 500, 16);
+INSERT INTO public.computer (idcomputer, name, hdd_size, ram_size) VALUES (3, 'pc№1', 1000, 32);
+
+
+--
+-- TOC entry 2984 (class 0 OID 17140)
+-- Dependencies: 202
+-- Data for Name: instolation; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO public.instolation (idinstolation, idcomputer, idprogram, data) VALUES (1, 1, 1, '2021-05-26 17:32:55.401569');
+INSERT INTO public.instolation (idinstolation, idcomputer, idprogram, data) VALUES (2, 2, 2, '2021-05-26 17:32:55.401569');
+INSERT INTO public.instolation (idinstolation, idcomputer, idprogram, data) VALUES (3, 2, 3, '2021-05-26 17:32:55.401569');
+INSERT INTO public.instolation (idinstolation, idcomputer, idprogram, data) VALUES (4, 3, 4, '2021-05-26 17:32:55.401569');
+INSERT INTO public.instolation (idinstolation, idcomputer, idprogram, data) VALUES (5, 3, 5, '2021-05-26 17:32:55.401569');
+INSERT INTO public.instolation (idinstolation, idcomputer, idprogram, data) VALUES (6, 3, 6, '2021-05-26 17:32:55.401569');
+
+
+--
+-- TOC entry 2986 (class 0 OID 17145)
+-- Dependencies: 204
+-- Data for Name: os; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO public.os (idos, name) VALUES (1, 'Windows 10');
+INSERT INTO public.os (idos, name) VALUES (2, 'Mac');
+INSERT INTO public.os (idos, name) VALUES (3, 'Linux');
+INSERT INTO public.os (idos, name) VALUES (4, 'Windows 7');
+
+
+--
+-- TOC entry 2988 (class 0 OID 17153)
+-- Dependencies: 206
+-- Data for Name: program; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO public.program (idprogram, idos, title, hdd_space, resident_ram_space, run_ram_space) VALUES (1, 1, 'pr№1', 5.1, 0.3, 0.5);
+INSERT INTO public.program (idprogram, idos, title, hdd_space, resident_ram_space, run_ram_space) VALUES (2, 2, 'pr№2', 3.5, 0.2, 0.6);
+INSERT INTO public.program (idprogram, idos, title, hdd_space, resident_ram_space, run_ram_space) VALUES (3, 2, 'pr№3', 2, 0.1, 0.7);
+INSERT INTO public.program (idprogram, idos, title, hdd_space, resident_ram_space, run_ram_space) VALUES (4, 3, 'pr№4', 1.3, 0.15, 0.8);
+INSERT INTO public.program (idprogram, idos, title, hdd_space, resident_ram_space, run_ram_space) VALUES (5, 3, 'pr№5', 4.05, 0.25, 0.9);
+INSERT INTO public.program (idprogram, idos, title, hdd_space, resident_ram_space, run_ram_space) VALUES (6, 3, 'pr№6', 4.4, 0.25, 1);
+INSERT INTO public.program (idprogram, idos, title, hdd_space, resident_ram_space, run_ram_space) VALUES (7, 4, 'pr№7', 2.2, 0.4, 0.55);
+INSERT INTO public.program (idprogram, idos, title, hdd_space, resident_ram_space, run_ram_space) VALUES (8, 1, 'pr№8', 1000, 0.3, 0.5);
+INSERT INTO public.program (idprogram, idos, title, hdd_space, resident_ram_space, run_ram_space) VALUES (9, 1, 'pr№9', 5.1, 0.3, 32);
+INSERT INTO public.program (idprogram, idos, title, hdd_space, resident_ram_space, run_ram_space) VALUES (10, 1, 'pr№10', 5.1, 0.3, 0.5);
+
+
+--
+-- TOC entry 3000 (class 0 OID 0)
+-- Dependencies: 201
+-- Name: computer_idcomputer_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.computer_idcomputer_seq', 1, false);
+
+
+--
+-- TOC entry 3001 (class 0 OID 0)
+-- Dependencies: 203
+-- Name: instolation_idinstolation_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.instolation_idinstolation_seq', 1, false);
+
+
+--
+-- TOC entry 3002 (class 0 OID 0)
+-- Dependencies: 205
+-- Name: os_idos_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.os_idos_seq', 1, false);
+
+
+--
+-- TOC entry 3003 (class 0 OID 0)
+-- Dependencies: 207
+-- Name: program_idprogram_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.program_idprogram_seq', 1, false);
+
+
+--
+-- TOC entry 2842 (class 2606 OID 17166)
+-- Name: computer computer_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.computer
+    ADD CONSTRAINT computer_pkey PRIMARY KEY (idcomputer);
+
+
+--
+-- TOC entry 2844 (class 2606 OID 17168)
+-- Name: instolation instolation_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.instolation
+    ADD CONSTRAINT instolation_pkey PRIMARY KEY (idinstolation);
+
+
+--
+-- TOC entry 2846 (class 2606 OID 17170)
+-- Name: os os_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.os
+    ADD CONSTRAINT os_pkey PRIMARY KEY (idos);
+
+
+--
+-- TOC entry 2848 (class 2606 OID 17172)
+-- Name: program program_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.program
+    ADD CONSTRAINT program_pkey PRIMARY KEY (idprogram);
+
+
+--
+-- TOC entry 2849 (class 2606 OID 17173)
+-- Name: instolation instolation_idcomputer_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.instolation
+    ADD CONSTRAINT instolation_idcomputer_fkey FOREIGN KEY (idcomputer) REFERENCES public.computer(idcomputer);
+
+
+--
+-- TOC entry 2850 (class 2606 OID 17178)
+-- Name: instolation instolation_idprogram_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.instolation
+    ADD CONSTRAINT instolation_idprogram_fkey FOREIGN KEY (idprogram) REFERENCES public.program(idprogram);
+
+
+--
+-- TOC entry 2851 (class 2606 OID 17183)
+-- Name: program program_idos_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.program
+    ADD CONSTRAINT program_idos_fkey FOREIGN KEY (idos) REFERENCES public.os(idos);
+
+
+-- Completed on 2021-07-01 23:57:11 +04
+
+--
+-- PostgreSQL database dump complete
+--
+
